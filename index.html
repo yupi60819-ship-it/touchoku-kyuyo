@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>当直バイト給与管理 v2</title>
+<meta name="theme-color" content="#f4f4f1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="当直給与">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="robots" content="noindex">
+<style>
+:root{
+  color-scheme: light;
+  --surface-1:#fcfcfb; --plane:#f4f4f1; --card:#ffffff;
+  --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --baseline:#c3c2b7; --border:rgba(11,11,11,.10);
+  --series-1:#2a78d6; --series-1-wash:rgba(42,120,214,.10);
+  --good:#0ca30c; --warning:#fab219; --critical:#d03b3b;
+  --accent-soft:rgba(42,120,214,.08);
+  --radius:12px;
+  --shadow:0 1px 2px rgba(11,11,11,.05), 0 1px 1px rgba(11,11,11,.03);
+}
+@media (prefers-color-scheme: dark){
+  :root:where(:not([data-theme="light"])){
+    color-scheme: dark;
+    --surface-1:#1a1a19; --plane:#0d0d0d; --card:#1f1f1e;
+    --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --baseline:#383835; --border:rgba(255,255,255,.10);
+    --series-1:#3987e5; --series-1-wash:rgba(57,135,229,.14);
+    --accent-soft:rgba(57,135,229,.12);
+    --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --surface-1:#1a1a19; --plane:#0d0d0d; --card:#1f1f1e;
+  --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
+  --grid:#2c2c2a; --baseline:#383835; --border:rgba(255,255,255,.10);
+  --series-1:#3987e5; --series-1-wash:rgba(57,135,229,.14);
+  --accent-soft:rgba(57,135,229,.12);
+  --shadow:none;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--plane); color:var(--ink);
+  font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI",Meiryo,sans-serif;
+  font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased;
+}
+button{font:inherit;color:inherit}
+input,select{font:inherit;color:inherit}
+
+/* ---------- layout ---------- */
+.wrap{max-width:1060px;margin:0 auto;padding:0 16px 80px}
+header.top{
+  position:sticky;top:0;z-index:40;background:var(--plane);
+  border-bottom:1px solid var(--border);
+}
+.top-inner{max-width:1060px;margin:0 auto;padding:10px 16px 0;display:flex;flex-direction:column;gap:10px}
+.brand{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.brand h1{font-size:16px;font-weight:650;margin:0;letter-spacing:.01em}
+.brand .spacer{flex:1}
+.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{
+  appearance:none;background:none;border:0;padding:9px 14px;border-radius:8px 8px 0 0;
+  color:var(--ink-2);cursor:pointer;white-space:nowrap;font-weight:520;
+  border-bottom:2px solid transparent;
+}
+.tab:hover{background:var(--accent-soft)}
+.tab[aria-selected="true"]{color:var(--ink);font-weight:650;border-bottom-color:var(--series-1)}
+.iconbtn{
+  appearance:none;background:var(--card);border:1px solid var(--border);border-radius:8px;
+  padding:5px 10px;cursor:pointer;color:var(--ink-2);font-size:13px;
+}
+.iconbtn:hover{background:var(--accent-soft);color:var(--ink)}
+.view{display:none;padding-top:18px}
+.view.active{display:block}
+
+/* ---------- cards ---------- */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+.card-pad{padding:16px}
+.sec-title{font-size:13px;font-weight:650;color:var(--ink);margin:0 0 2px}
+.sec-sub{font-size:12px;color:var(--muted);margin:0 0 14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:760px){.grid2{grid-template-columns:1fr}}
+
+/* ---------- month nav ---------- */
+.monthnav{display:flex;align-items:center;gap:8px}
+.monthnav .label{font-size:20px;font-weight:650;min-width:9.5em;text-align:center;font-variant-numeric:tabular-nums}
+.navbtn{
+  appearance:none;width:32px;height:32px;border-radius:8px;border:1px solid var(--border);
+  background:var(--card);cursor:pointer;color:var(--ink-2);font-size:15px;line-height:1;
+}
+.navbtn:hover{background:var(--accent-soft);color:var(--ink)}
+
+/* ---------- hero / stat ---------- */
+.statrow{display:flex;gap:14px;flex-wrap:wrap;align-items:stretch}
+.stat{flex:1 1 150px;min-width:140px}
+.stat .lab{font-size:12px;color:var(--muted);margin-bottom:4px}
+.stat .val{font-size:22px;font-weight:650;letter-spacing:-.01em}
+.hero .lab{font-size:12px;color:var(--muted)}
+.hero .val{font-size:40px;font-weight:680;letter-spacing:-.02em;line-height:1.1}
+.hero .sub{font-size:12px;color:var(--ink-2);margin-top:2px}
+.delta{font-size:12px;font-weight:600}
+.delta.up{color:var(--good)} .delta.down{color:var(--critical)} .delta.flat{color:var(--muted)}
+
+/* ---------- toolbar ---------- */
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:16px 0 12px}
+.search{
+  flex:1 1 200px;min-width:160px;padding:8px 11px;border-radius:9px;
+  border:1px solid var(--border);background:var(--card);
+}
+.search:focus{outline:2px solid var(--series-1);outline-offset:-1px}
+.chip{
+  appearance:none;background:var(--card);border:1px solid var(--border);border-radius:99px;
+  padding:6px 12px;cursor:pointer;color:var(--ink-2);font-size:13px;white-space:nowrap;
+}
+.chip:hover{background:var(--accent-soft)}
+.chip[aria-pressed="true"]{background:var(--series-1);border-color:var(--series-1);color:#fff;font-weight:600}
+
+/* ---------- hospital entry cards ---------- */
+.hlist{display:flex;flex-direction:column;gap:8px}
+.hcard{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.hcard.has{border-left:3px solid var(--series-1)}
+.hhead{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.hcard:not(.has) .hhead{border-bottom-color:transparent}
+.hname{font-weight:620;font-size:14px}
+.hcycle{font-size:11.5px;color:var(--muted)}
+.hpay{font-size:11.5px;font-weight:600;color:var(--ink);padding:2px 8px;border-radius:99px;background:var(--accent-soft);white-space:nowrap}
+.hsub{margin-left:auto;font-weight:650;font-variant-numeric:tabular-nums}
+.hsub.zero{color:var(--muted);font-weight:400;font-size:12px}
+.srow{display:flex;align-items:center;gap:10px;padding:7px 14px;border-top:1px solid var(--border)}
+.srow:first-child{border-top:0}
+.skind{width:5.5em;font-size:13px}
+.srate{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;width:6.5em}
+.stepper{display:flex;align-items:center;gap:0;margin-left:auto}
+.stepper button{
+  appearance:none;width:30px;height:30px;border:1px solid var(--border);background:var(--card);
+  cursor:pointer;color:var(--ink-2);font-size:16px;line-height:1;display:grid;place-items:center;
+}
+.stepper button:first-child{border-radius:8px 0 0 8px}
+.stepper button:last-child{border-radius:0 8px 8px 0}
+.stepper button:hover:not(:disabled){background:var(--accent-soft);color:var(--ink)}
+.stepper button:disabled{opacity:.35;cursor:default}
+.stepper .n{-moz-appearance:textfield;
+  width:40px;height:30px;border:1px solid var(--border);border-left:0;border-right:0;
+  text-align:center;background:var(--surface-1);font-variant-numeric:tabular-nums;font-weight:600;
+}
+.samt{width:6.5em;text-align:right;font-variant-numeric:tabular-nums;font-size:13px}
+.samt.zero{color:var(--muted)}
+.stepper .n::-webkit-outer-spin-button,.stepper .n::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.empty{padding:30px 16px;text-align:center;color:var(--muted);font-size:13px}
+
+/* ---------- tables ---------- */
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th,table.t td{padding:7px 8px;text-align:left;border-bottom:1px solid var(--border)}
+table.t th{font-size:11.5px;font-weight:600;color:var(--muted);white-space:nowrap}
+table.t td.num,table.t th.num{text-align:right;font-variant-numeric:tabular-nums}
+table.t tbody tr:hover{background:var(--accent-soft)}
+table.t tfoot td{font-weight:650;border-top:1px solid var(--baseline);border-bottom:0}
+.tscroll{overflow-x:auto}
+.thismonth td{background:var(--series-1-wash)}
+
+/* ---------- payments ---------- */
+.paygroup{border:1px solid var(--border);border-radius:var(--radius);background:var(--card);overflow:hidden;margin-bottom:8px}
+.paygroup.next{border-color:var(--series-1);box-shadow:0 0 0 1px var(--series-1)}
+.payhead{display:flex;align-items:baseline;gap:10px;padding:10px 14px;background:var(--accent-soft);flex-wrap:wrap}
+.paydate{font-weight:650;font-variant-numeric:tabular-nums}
+.paydow{font-size:12px;color:var(--muted)}
+.paytot{margin-left:auto;font-weight:680;font-size:16px;font-variant-numeric:tabular-nums}
+.payline{display:flex;gap:10px;padding:6px 14px;border-top:1px solid var(--border);font-size:13px;align-items:baseline}
+.payline .hn{font-weight:520}
+.payline .wm{font-size:12px;color:var(--muted)}
+.payline .amt{margin-left:auto;font-variant-numeric:tabular-nums}
+.badge{display:inline-block;font-size:10.5px;padding:1px 6px;border-radius:99px;border:1px solid var(--border);color:var(--muted);vertical-align:1px}
+.badge.warn{color:var(--ink);border-color:var(--warning);background:rgba(250,178,25,.18)}
+.notice{
+  display:flex;gap:10px;align-items:flex-start;padding:11px 13px;border-radius:10px;
+  background:rgba(250,178,25,.12);border:1px solid var(--warning);font-size:12.5px;margin-bottom:14px;
+}
+.notice.info{background:var(--accent-soft);border-color:var(--series-1)}
+.notice .ic{font-weight:700}
+.notice a,.notice button.link{color:inherit;text-decoration:underline;background:none;border:0;padding:0;cursor:pointer;font:inherit}
+
+/* ---------- settings ---------- */
+table.set{width:100%;border-collapse:collapse;font-size:13px}
+table.set th{font-size:11.5px;font-weight:600;color:var(--muted);padding:6px 6px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--border)}
+table.set td{padding:5px 6px;border-bottom:1px solid var(--border);vertical-align:top}
+table.set tr.hrow>td{border-bottom:0;padding-top:10px}
+table.set tr.srow2>td{border-bottom:0;padding-top:0}
+table.set tr.gap>td{height:6px;padding:0;border-bottom:1px solid var(--border)}
+.inp{padding:5px 8px;border-radius:7px;border:1px solid var(--border);background:var(--surface-1);width:100%;min-width:0}
+.inp:focus{outline:2px solid var(--series-1);outline-offset:-1px}
+.inp.w-name{min-width:150px;max-width:300px;font-weight:600}
+.inp.num{text-align:right;font-variant-numeric:tabular-nums}
+select.inp{background:var(--surface-1)}
+.del{appearance:none;border:1px solid var(--border);background:var(--card);border-radius:7px;width:26px;height:26px;cursor:pointer;color:var(--muted);line-height:1}
+.del:hover{border-color:var(--critical);color:var(--critical)}
+.btn{
+  appearance:none;background:var(--series-1);color:#fff;border:0;border-radius:9px;
+  padding:8px 14px;font-weight:600;cursor:pointer;
+}
+.btn:hover{filter:brightness(1.08)}
+.btn.ghost{background:var(--card);color:var(--ink);border:1px solid var(--border)}
+.btn.ghost:hover{background:var(--accent-soft);filter:none}
+.btn.danger{background:var(--card);color:var(--critical);border:1px solid var(--critical)}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+
+/* ---------- chart ---------- */
+.chartbox{position:relative}
+svg.chart{display:block;width:100%;height:auto;overflow:visible}
+svg.chart text{font-family:inherit}
+.tick{fill:var(--muted);font-size:10.5px}
+.tick.tab{font-variant-numeric:tabular-nums}
+.gridline{stroke:var(--grid);stroke-width:1}
+.base{stroke:var(--baseline);stroke-width:1}
+.col{fill:var(--series-1)}
+.col.dim{fill:var(--series-1);opacity:.34}
+.colhit{fill:transparent;cursor:pointer}
+.collab{fill:var(--ink);font-size:10.5px;font-weight:600;text-anchor:middle;font-variant-numeric:tabular-nums}
+.tip{
+  position:absolute;pointer-events:none;z-index:20;background:var(--card);color:var(--ink);
+  border:1px solid var(--border);border-radius:9px;padding:7px 10px;font-size:12px;
+  box-shadow:0 4px 14px rgba(0,0,0,.14);white-space:nowrap;opacity:0;transition:opacity .1s;
+  transform:translate(-50%,-100%);
+}
+.tip.on{opacity:1}
+.tip .tv{font-weight:650;font-variant-numeric:tabular-nums}
+.tip .tl{color:var(--muted);font-size:11px}
+.legendnote{font-size:11.5px;color:var(--muted);margin-top:8px;display:flex;gap:14px;flex-wrap:wrap}
+.swatch{display:inline-block;width:9px;height:9px;border-radius:2px;background:var(--series-1);margin-right:4px;vertical-align:0}
+.swatch.dim{opacity:.34}
+details.tv{margin-top:12px}
+details.tv summary{font-size:12px;color:var(--ink-2);cursor:pointer}
+.foot{color:var(--muted);font-size:11.5px;margin-top:26px;text-align:center;line-height:1.7}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <h1>当直バイト給与管理</h1>
+      <span class="spacer"></span>
+      <button class="iconbtn" id="themeBtn" title="表示テーマ切替">◐ テーマ</button>
+      <button class="iconbtn" id="saveBtn" title="バックアップを書き出す">↓ バックアップ</button>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" data-view="entry" aria-selected="true">勤務入力</button>
+      <button class="tab" role="tab" data-view="monthly" aria-selected="false">月別収入</button>
+      <button class="tab" role="tab" data-view="pay" aria-selected="false">入金予定</button>
+      <button class="tab" role="tab" data-view="settings" aria-selected="false">病院設定</button>
+      <button class="tab" role="tab" data-view="data" aria-selected="false">データ</button>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+  <div id="storageWarn"></div><div id="backupNotice"></div><div id="welcome"></div>
+
+  <!-- ============ 勤務入力 ============ -->
+  <section class="view active" id="view-entry">
+    <div class="card card-pad">
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <div class="monthnav">
+          <button class="navbtn" id="ePrev" title="前の月">‹</button>
+          <div class="label" id="eLabel">—</div>
+          <button class="navbtn" id="eNext" title="次の月">›</button>
+        </div>
+        <button class="iconbtn" id="eToday">今月</button>
+        <span class="spacer" style="flex:1"></span>
+        <div class="hero" style="text-align:right">
+          <div class="lab">この月の勤務で稼いだ額（発生ベース）</div>
+          <div class="val" id="eTotal">¥0</div>
+          <div class="sub" id="eSub">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card card-pad" style="margin-top:14px"><div class="calendar" id="eCalendar"></div><p class="sec-sub" style="margin:8px 0 0">日をタップして勤務を追加・編集。¥ はその日の入金予定合計です。</p></div>
+    <div class="toolbar">
+      <input class="search" id="eSearch" type="search" placeholder="病院名・勤務種別で絞り込み" autocomplete="off">
+      <button class="chip" id="eOnlyEntered" aria-pressed="false">入力済みのみ</button>
+      <button class="chip" id="eCopyPrev" style="border-radius:9px">前月の回数をコピー</button>
+      <button class="chip" id="eClear" style="border-radius:9px">この月をクリア</button>
+    </div>
+
+    <div class="hlist" id="eList"></div>
+  </section>
+
+  <!-- ============ 月別収入 ============ -->
+  <section class="view" id="view-monthly">
+    <div class="card card-pad">
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <div class="monthnav">
+          <button class="navbtn" id="yPrev" title="前年">‹</button>
+          <div class="label" id="yLabel" style="min-width:6em">—</div>
+          <button class="navbtn" id="yNext" title="翌年">›</button>
+        </div>
+        <span style="flex:1"></span>
+        <div class="hero" style="text-align:right">
+          <div class="lab" id="yHeroLab">年間合計（発生ベース）</div>
+          <div class="val" id="yTotal">¥0</div>
+          <div class="sub" id="ySub">—</div>
+        </div>
+      </div>
+      <div id="yGoal"></div><div style="height:14px"></div>
+      <h2 class="sec-title">月別の稼ぎ（その月の勤務だけで計算）</h2>
+      <p class="sec-sub">実際の入金日ではなく、働いた月で集計した金額です。</p>
+      <div class="chartbox" id="yChart"></div>
+      <div class="legendnote">
+        <span><span class="swatch"></span>確定・過去の月</span>
+        <span><span class="swatch dim"></span>今月以降（予定を含む）</span>
+      </div>
+    </div>
+
+    <div style="height:14px"></div>
+    <div class="grid2">
+      <div class="card card-pad">
+        <h2 class="sec-title">月別内訳</h2>
+        <p class="sec-sub">回数・金額・前月比</p>
+        <div class="tscroll"><table class="t" id="yTable"></table></div>
+      </div>
+      <div class="card card-pad">
+        <h2 class="sec-title">病院別の稼ぎ（この年の合計）</h2>
+        <p class="sec-sub">上位15件</p>
+        <div class="chartbox" id="yHosp"></div>
+      </div>
+    </div>
+    <div class="card card-pad" style="margin-top:14px"><h2 class="sec-title">病院別の勤務内訳</h2><p class="sec-sub">平均単価は給与÷回数。時給は勤務時間が登録された種別の給与÷時間です。</p><table class="t mobile-cards" id="yHospTable"></table></div>
+    <div class="card card-pad" style="margin-top:14px"><h2 class="sec-title">確定申告用 年間サマリ</h2><div class="toolbar"><label>集計基準 <select class="inp" id="yBasis"><option value="paid">入金日ベース</option><option value="work">勤務日ベース</option></select></label><button class="btn ghost" id="yCsv">年間サマリCSV</button></div><p class="sec-sub">入金日ベースは予定日で集計（未確認の入金も含む）。支給額は税引前、実際の入金額は集計に使いません。最終的には支払元の書類と照合してください。</p><table class="t mobile-cards" id="ySummary"></table></div>
+  </section>
+
+  <!-- ============ 入金予定 ============ -->
+  <section class="view" id="view-pay">
+    <div id="payWarn"></div>
+    <div class="card card-pad">
+      <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-end">
+        <div class="hero">
+          <div class="lab">次の入金</div>
+          <div class="val" id="pNextAmt">—</div>
+          <div class="sub" id="pNextWhen">—</div>
+        </div>
+        <span style="flex:1"></span>
+        <div class="statrow" style="flex:2 1 320px">
+          <div class="stat"><div class="lab">今後30日の入金</div><div class="val" id="p30">¥0</div></div>
+          <div class="stat"><div class="lab">未入金の残高（既入力分）</div><div class="val" id="pPending">¥0</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:14px"></div>
+    <div class="card card-pad">
+      <h2 class="sec-title">振込月ごとの入金額</h2>
+      <p class="sec-sub">病院ごとの締め日・支払日の設定にもとづく計算</p>
+      <div class="chartbox" id="pChart"></div>
+      <div class="legendnote">
+        <span><span class="swatch"></span>入金確認済み</span>
+        <span><span class="swatch dim"></span>未確認の入金（予定を含む）</span>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <button class="chip" id="pOnlyFuture" aria-pressed="true">今後の入金だけ</button>
+      <input class="search" id="pSearch" type="search" placeholder="病院名で絞り込み" autocomplete="off">
+    </div>
+    <div id="pList"></div>
+  </section>
+
+  <!-- ============ 病院設定 ============ -->
+  <section class="view" id="view-settings">
+    <div class="notice info">
+      <span class="ic">i</span>
+      <div>
+        <b>支払サイクルの読み方</b>：「月末締め → 翌月25日払い」なら、7月に働いた分が8月25日に振り込まれます。<br>
+        締め日が月末以外（15日締めなど）の病院は、月単位の入力では締め期間をまたぐため<b>概算</b>になります（<span class="badge warn">概算</span>が付きます）。
+      </div>
+    </div>
+    <div class="toolbar" style="margin-top:0">
+      <input class="search" id="sSearch" type="search" placeholder="病院名で絞り込み" autocomplete="off">
+      <button class="chip" id="sOnlyUnverified" aria-pressed="false" style="border-radius:9px">支払日が未確認のみ</button>
+      <button class="btn ghost" id="sBulk">支払サイクルを一括設定</button>
+      <button class="chip" id="sShowArchived" aria-pressed="false">アーカイブも表示</button>
+      <button class="btn" id="sAdd">＋ 病院を追加</button>
+    </div>
+    <div class="bulkpanel" id="bulkPanel">
+      <h2 class="sec-title">支払サイクルを一括設定</h2>
+      <p class="sec-sub">同じ条件の病院が多いときに。個別の設定はあとから直せます。</p>
+      <div class="srow-cyc" style="margin-top:0">
+        <label>締め日</label>
+        <select class="inp" id="bClose" style="width:auto"></select>
+        <label>支払</label>
+        <select class="inp" id="bOffset" style="width:auto"></select>
+        <select class="inp" id="bDay" style="width:auto"></select>
+      </div>
+      <div class="btnrow">
+        <button class="btn" id="bApplyUnver">未確認の病院にだけ適用</button>
+        <button class="btn ghost" id="bApplyAll">すべての病院に適用</button>
+        <button class="btn ghost" id="bCancel">閉じる</button>
+      </div>
+    </div>
+    <div id="sTable"></div>
+  </section>
+
+  <!-- ============ データ ============ -->
+  <section class="view" id="view-data">
+    <div class="card card-pad">
+      <h2 class="sec-title">バックアップと復元</h2>
+      <p class="sec-sub">データはこのブラウザの中に自動保存されます。念のため、ときどき書き出して保管してください。</p>
+      <div class="btnrow" style="margin-top:0">
+        <button class="btn" id="dExport">JSONを書き出す（バックアップ）</button>
+        <button class="btn ghost" id="dImportBtn">JSONを読み込む</button>
+        <input type="file" id="dImport" accept=".json,application/json" style="display:none">
+      </div>
+      <div style="height:22px"></div>
+      <h2 class="sec-title">CSV書き出し（Excelで開けます）</h2>
+      <p class="sec-sub">Excelで開くときは、文字化けしないようUTF-8 BOM付きで出力します。</p>
+      <div class="btnrow" style="margin-top:0">
+        <button class="btn ghost" id="dCsvWork">勤務明細CSV</button>
+        <button class="btn ghost" id="dCsvMonth">月別集計CSV</button>
+        <button class="btn ghost" id="dCsvPay">入金予定CSV</button>
+      </div>
+      <div class="btnrow"><button class="btn ghost" id="dIcs">カレンダー書き出し（.ics）</button></div><p class="sec-sub" style="margin-top:8px">日付つき勤務と入金予定を終日イベントとして出力します。日付未登録の回数は入金予定だけに含めます。</p>
+      <div style="height:22px"></div><h2 class="sec-title">集計の設定</h2><div class="fieldgrid" style="margin-top:10px"><label>年間目標（円・空欄=未設定）<input class="inp" type="number" min="1" step="1" id="dGoal"></label><label class="chk"><input type="checkbox" id="dTransport">合計金額に交通費を含める</label></div><p id="dBackup" class="sec-sub"></p>
+      <div style="height:22px"></div>
+      <h2 class="sec-title">取り込みデータの年をずらす</h2>
+      <p class="sec-sub">日付未登録の回数・勤務日・入金確認の期間を一緒にずらします。2月29日は移動先の月末に調整します。</p>
+      <div class="btnrow" style="margin-top:0;align-items:center">
+        <select class="inp" id="dShift" style="width:auto">
+          <option value="-2">2年戻す</option><option value="-1">1年戻す</option>
+          <option value="1">1年進める</option><option value="2">2年進める</option>
+        </select>
+        <button class="btn ghost" id="dShiftGo">全勤務データの年をずらす</button>
+      </div>
+      <div style="height:22px"></div>
+      <h2 class="sec-title">初期化</h2>
+      <p class="sec-sub">元に戻せません。先にバックアップを書き出してください。</p>
+      <div class="btnrow" style="margin-top:0">
+        <button class="btn danger" id="dClearCounts">全勤務・入金確認を消去（病院設定は残す）</button>
+        <button class="btn danger" id="dReset">全部を空の初期状態に戻す</button>
+      </div>
+    </div>
+    <p class="foot">
+      給与は基本給・インセンティブ・その他手当の税引前合計。交通費は別表示し、合計への算入を切り替えられます。<br>
+      日付つき勤務は締め期間を判定し、病院設定に従って土日祝を調整します。日付未登録分は勤務月を期間月とする概算です。<br>祝日は2020〜2040年に対応。控除と手取りは見込み額です。データはこのブラウザだけに保存され、外部に送信されません。
+    </p>
+  </section>
+</div>
+<dialog id="entryDialog" aria-labelledby="entryTitle"><form id="entryForm">
+<div class="srow-top"><h2 id="entryTitle" class="sec-title">勤務を登録</h2><button type="button" class="iconbtn" id="eClose" style="margin-left:auto" aria-label="閉じる">✕</button></div>
+<div id="eDayList" class="datechips"></div><div id="eConvertNote" class="sec-sub"></div>
+<div class="fieldgrid"><label>勤務日<input class="inp" type="date" id="fDate" required></label><label>病院を検索<input class="inp" type="search" id="fSearch" placeholder="最近使った順・名称で検索"></label><label>病院<select class="inp" id="fHospital" required></select></label><label>勤務種別<select class="inp" id="fShift" required></select></label></div>
+<div id="fIncentives" style="margin-top:12px"></div><div class="fieldgrid" style="margin-top:12px"><label>その他手当（円）<input class="inp" type="number" step="1" id="fExtra" value="0"></label><label>交通費（円・空欄=病院の既定）<input class="inp" type="number" step="1" min="0" id="fTransport"></label></div><label class="field">メモ<textarea class="inp" id="fMemo" rows="2"></textarea></label><div id="fDuplicate"></div><div class="notice info" id="fPreview" aria-live="polite"></div><div class="btnrow"><button class="btn" type="submit" id="fSave">保存</button><button class="btn ghost" type="button" id="fNew">この日に別の勤務を追加</button><button class="btn danger" type="button" id="fDelete">この勤務を削除</button></div>
+</form></dialog>
+<style>
+/* ---- settings cards ---- */
+.scard{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px}
+.scard.unver{border-left:3px solid var(--warning)}
+.srow-top{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.srow-cyc{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:9px;font-size:12.5px;color:var(--ink-2)}
+.srow-cyc label{color:var(--muted);font-size:11.5px}
+.cycpv{font-size:12px;font-weight:600;color:var(--ink);padding:3px 8px;border-radius:99px;background:var(--accent-soft)}
+.skinds{margin-top:10px;padding-top:9px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:5px}
+.skind-row{display:flex;gap:8px;align-items:center}
+.skind-row .lab{font-size:11.5px;color:var(--muted);width:3.2em}
+.chk{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-2);cursor:pointer;white-space:nowrap}
+.mini{appearance:none;background:none;border:1px dashed var(--border);border-radius:7px;padding:4px 10px;font-size:12px;color:var(--muted);cursor:pointer}
+.mini:hover{border-style:solid;color:var(--ink);background:var(--accent-soft)}
+.bulkpanel{background:var(--card);border:1px solid var(--series-1);border-radius:var(--radius);padding:14px;margin-bottom:12px;display:none}
+.bulkpanel.on{display:block}
+.hbar-lab{fill:var(--ink-2);font-size:11px}
+.hbar-val{fill:var(--ink);font-size:11px;font-weight:600;font-variant-numeric:tabular-nums}
+
+/* ---- v2 additions: existing theme variables are shared throughout ---- */
+textarea{font:inherit;color:inherit;resize:vertical} .field{display:block;margin:12px 0}
+.fieldgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.fieldgrid>label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--ink-2);min-width:0}
+.fieldgrid>label.chk{flex-direction:row;align-items:center;white-space:normal}.fieldgrid .inp{max-width:100%}
+.calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}.caldow{text-align:center;font-size:11px;color:var(--muted);padding:4px 0}
+.calday{appearance:none;display:flex;flex-direction:column;align-items:stretch;text-align:left;min-width:0;min-height:91px;padding:5px;border:1px solid var(--border);border-radius:7px;background:var(--card);cursor:pointer;font-size:12px;overflow-wrap:anywhere}.calday:hover{background:var(--accent-soft)}.calday.today{outline:2px solid var(--series-1);outline-offset:-2px}.calday.sun,.calday.holiday,.caldow.sun{color:var(--critical)}.calday.sat,.caldow.sat{color:var(--series-1)}.calday.holiday{color:var(--critical)}
+.calevent{display:block;background:var(--accent-soft);color:var(--ink);font-size:10px;line-height:1.35;margin-top:3px;padding:2px;border-radius:3px;overflow:hidden}.calpay{font-size:10px;color:var(--good);margin-top:3px;line-height:1.3;white-space:nowrap}.calholiday{font-size:9px;line-height:1.2}
+.srow>*,.hhead>*,.incstep>*{min-width:0;max-width:100%;overflow-wrap:anywhere}
+.datechips{display:flex;gap:5px;flex-wrap:wrap;padding:8px 0}.datechips .chip{white-space:normal;font-size:12px;padding:4px 8px}.entrychips{padding:6px 14px}.detail{font-size:11.5px;color:var(--ink-2);margin-top:4px}.srow{flex-wrap:wrap}.undated-label{font-size:10.5px;color:var(--muted)}
+dialog{width:min(590px,calc(100% - 24px));max-height:calc(100dvh - 32px);padding:18px;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);color:var(--ink);overflow-y:auto;box-shadow:0 16px 60px #0005}dialog::backdrop{background:#0007}dialog form{margin:0}#fPreview{display:block;margin-top:14px}.incstep{display:flex;gap:8px;align-items:center;padding:6px 0;flex-wrap:wrap}.incstep .stepper{margin-left:auto}
+.payline{flex-wrap:wrap;align-items:center}.paydetail{flex:1 1 100%}.paycontrols{display:flex;gap:10px;flex-wrap:wrap;align-items:center;width:100%;padding-top:6px}.paycontrols input[type=number]{width:130px}.paycontrols label{font-size:12px}.skind-row{flex-wrap:wrap}.skind-row label{display:flex;gap:5px;align-items:center;font-size:11px;flex:1 1 105px;min-width:0;white-space:nowrap}.skind-row .inp{width:100%}.scard .fieldgrid{margin:12px 0}.scard.archived{opacity:.75}
+.progress{height:9px;background:var(--grid);border-radius:10px;overflow:hidden;margin:8px 0}.progress>span{display:block;height:100%;background:var(--series-1)}
+.card,.view,.grid2>*,.chartbox{min-width:0}.hname,.hcycle,.hsub,.hn,.scard,.notice{overflow-wrap:anywhere}.tip{max-width:100%;white-space:normal}.hero .val{overflow-wrap:anywhere}.btn,.chip,.iconbtn{max-width:100%}table.t td{overflow-wrap:anywhere}
+@media(max-width:600px){.wrap{padding:0 12px 60px}.top-inner{padding-left:12px;padding-right:12px}.brand h1{font-size:15px}.brand{gap:6px}.brand .iconbtn{font-size:11px;padding:5px 7px}.tabs{overflow:visible;gap:0}.tab{padding:9px 0;font-size:11px;flex:1;min-width:0}.monthnav{gap:5px}.monthnav .label{font-size:18px;min-width:8.5em}.hero .val{font-size:32px}.card-pad{padding:12px}.calendar{gap:2px}.calday{padding:3px;min-height:85px;font-size:11px}.calevent,.calpay{font-size:9px}.calholiday{font-size:8px}.fieldgrid{grid-template-columns:minmax(0,1fr)}.srow{gap:6px;padding:8px 10px}.skind{width:auto;min-width:4em}.srate{width:auto}.samt{width:auto;margin-left:auto}.srow .undated-label{flex-basis:100%}.srow .stepper{margin-left:0}.scard{padding:12px}.stat{min-width:120px}.tscroll{overflow:visible}table.mobile-cards,table.mobile-cards tbody,table.mobile-cards tfoot{display:block;width:100%}table.mobile-cards thead{display:none}table.mobile-cards tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:8px 0;border-bottom:1px solid var(--border);gap:4px}table.mobile-cards td{display:block;padding:3px 5px;border:0;text-align:left!important;font-size:12px;min-width:0}table.mobile-cards td:before{content:attr(data-label);display:block;font-size:10px;color:var(--muted)}table.mobile-cards td:first-child{grid-column:1/-1;font-weight:600}.btnrow .btn{font-size:12px}.hhead{padding:10px;gap:6px}.hsub{font-size:13px}}
+</style>
+<script>
+/* =========================================================================
+   当直バイト給与管理 v2 — 単一ファイル・ローカル保存
+   ========================================================================= */
+const SEED = {version:2, hospitals:[], counts:{}, entries:[], paid:{}, settings:{goalYear:null, includeTransport:true}, lastBackup:null, createdAt:null};
+const STORE_KEY = 'chokuchoku-kyuyo-v1';
+const YEN = n => '¥' + Math.round(n).toLocaleString('ja-JP');
+const pad2 = n => String(n).padStart(2, '0');
+const ymKey = (y, m) => `${y}-${pad2(m)}`;
+const lastDay = (y, m) => new Date(y, m, 0).getDate();
+const dateKey = d => `${ymKey(d.getFullYear(), d.getMonth()+1)}-${pad2(d.getDate())}`;
+const DOW = ['日','月','火','水','木','金','土'];
+const clone = o => JSON.parse(JSON.stringify(o));
+const own = (o,k) => Object.prototype.hasOwnProperty.call(o,k);
+const NOW = new Date();
+const TODAY = new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate());
+const TY = TODAY.getFullYear(), TM = TODAY.getMonth()+1;
+function shiftMonth(y,m,d) { const t=m+d; return [y+Math.floor((t-1)/12), ((t-1)%12+12)%12+1]; }
+function parseDate(s) { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
+function validDate(s) { return typeof s==='string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && dateKey(parseDate(s))===s; }
+function validMonth(s) { return /^\d{4}-(0[1-9]|1[0-2])$/.test(s); }
+const isObj = d => d && typeof d==='object' && !Array.isArray(d);
+function number(v, label, min=0, max=Infinity) {
+  if (typeof v!=='number' || !Number.isFinite(v) || v<min || v>max) throw Error(label+'の数値が不正です');
+  return v;
+}
+const optionalNumber = (v,label,min=0,max=Infinity) => v==null ? null : number(v,label,min,max);
+function migrate(data) {
+  if (!isObj(data) || !Array.isArray(data.hospitals)) throw Error('給与データの形式が違います');
+  if (data.version!=null && ![1,2].includes(data.version)) throw Error('未対応のデータバージョンです');
+  const d=clone(data), ids=new Set();
+  d.hospitals=d.hospitals.map(h=>{
+    if (!isObj(h) || typeof h.id!=='string' || !h.id || ids.has(h.id)) throw Error('病院IDが不正または重複しています');
+    ids.add(h.id);
+    h.name=String(h.name ?? '(名称未設定)');
+    h.closeDay=h.closeDay??99; h.payOffset=h.payOffset??1; h.payDay=h.payDay??25;
+    for (const [f,max] of [['closeDay',99],['payDay',99],['payOffset',4]]) {
+      number(h[f],f,f==='payOffset'?0:1,max);
+      if (!Number.isInteger(h[f]) || (f!=='payOffset' && h[f]>31 && h[f]!==99)) throw Error('支払サイクルが不正です');
+    }
+    h.verified=!!h.verified; h.archived=!!h.archived; h.memo=String(h.memo??'');
+    h.transport=optionalNumber(h.transport,'交通費'); h.taxRate=optionalNumber(h.taxRate,'控除率',0,100);
+    h.holidayRule=h.holidayRule??'none';
+    if (!['none','before','after'].includes(h.holidayRule)) throw Error('土日祝の扱いが不正です');
+    if (!Array.isArray(h.shifts)) throw Error('勤務種別が不正です');
+    const sids=new Set();
+    h.shifts=h.shifts.map(s=>{
+      if (!isObj(s) || typeof s.id!=='string' || !s.id || sids.has(s.id)) throw Error('勤務種別IDが不正です');
+      sids.add(s.id); s.kind=String(s.kind??'当直'); s.rate=number(s.rate??0,'単価');
+      s.hours=optionalNumber(s.hours,'勤務時間',Number.MIN_VALUE); return s;
+    });
+    h.incentives=h.incentives??[];
+    if (!Array.isArray(h.incentives)) throw Error('インセンティブ定義が不正です');
+    const iids=new Set();
+    h.incentives=h.incentives.map(i=>{
+      if (!isObj(i) || typeof i.id!=='string' || !i.id || iids.has(i.id)) throw Error('インセンティブIDが不正です');
+      iids.add(i.id); i.name=String(i.name??'手当'); i.amount=number(i.amount??0,'手当単価'); return i;
+    });
+    return h;
+  });
+  d.counts=d.counts??{};
+  if (!isObj(d.counts)) throw Error('回数データが不正です');
+  const countKeys=new Set(d.hospitals.flatMap(h=>h.shifts.map(s=>`${h.id}:${s.id}`)));
+  for (const [k,mm] of Object.entries(d.counts)) {
+    if (!validMonth(k) || !isObj(mm)) throw Error('勤務年月が不正です');
+    for (const [key,n] of Object.entries(mm)) {
+      number(n,'勤務回数'); if (!Number.isInteger(n) || !countKeys.has(key)) throw Error('勤務回数の参照が不正です');
+    }
+  }
+  d.entries=d.entries??[];
+  if (!Array.isArray(d.entries)) throw Error('勤務データが不正です');
+  const eids=new Set();
+  d.entries=d.entries.map(e=>{
+    if (!isObj(e) || typeof e.id!=='string' || !e.id || eids.has(e.id) || !validDate(e.date)) throw Error('勤務IDまたは日付が不正です');
+    eids.add(e.id);
+    const h=d.hospitals.find(h=>h.id===e.h);
+    if (!h || !h.shifts.some(s=>s.id===e.s)) throw Error('勤務の病院・種別が見つかりません');
+    e.inc=e.inc??{};
+    if (!isObj(e.inc)) throw Error('インセンティブ件数が不正です');
+    for (const [id,n] of Object.entries(e.inc)) {
+      number(n,'インセンティブ件数');
+      if (!Number.isInteger(n) || !h.incentives.some(i=>i.id===id)) throw Error('インセンティブの参照が不正です');
+    }
+    e.extra=number(e.extra??0,'その他手当',-Infinity); e.transport=optionalNumber(e.transport,'勤務交通費'); e.memo=String(e.memo??'');
+    return e;
+  });
+  d.paid=d.paid??{};
+  if (!isObj(d.paid)) throw Error('入金確認データが不正です');
+  for (const [key,p] of Object.entries(d.paid)) {
+    const at=key.lastIndexOf('|');
+    if (!ids.has(key.slice(0,at)) || !validMonth(key.slice(at+1)) || !isObj(p)) throw Error('入金確認の参照が不正です');
+    p.done=!!p.done; p.actual=optionalNumber(p.actual,'実際の入金額');
+  }
+  d.settings=d.settings??{};
+  if (!isObj(d.settings)) throw Error('設定が不正です');
+  d.settings.goalYear=optionalNumber(d.settings.goalYear,'年間目標',Number.MIN_VALUE);
+  d.settings.includeTransport=d.settings.includeTransport!==false;
+  d.lastBackup=typeof d.lastBackup==='string' && Number.isFinite(Date.parse(d.lastBackup)) ? d.lastBackup : null;
+  d.createdAt=typeof d.createdAt==='string' && Number.isFinite(Date.parse(d.createdAt)) ? d.createdAt : new Date().toISOString();
+  d.version=2; return d;
+}
+/* ---------- 保存 ---------- */
+let storageOK=true, loadProblem='', S=null;
+try { localStorage.setItem('__choku_test','1'); localStorage.removeItem('__choku_test'); } catch(e) { storageOK=false; }
+function load() {
+  if (storageOK) try {
+    const raw=localStorage.getItem(STORE_KEY);
+    if (raw) { S=migrate(JSON.parse(raw)); save(); return; }
+  } catch(e) { loadProblem=e.message; }
+  S=clone(SEED);
+}
+function save() {
+  S.createdAt ||= new Date().toISOString();
+  if (!storageOK || loadProblem) return;
+  try { localStorage.setItem(STORE_KEY,JSON.stringify(S)); }
+  catch(e) { storageOK=false; renderStorageWarn(); }
+}
+const U={view:'entry', ey:TY, em:TM, yy:TY, eq:'', onlyEntered:false, pFuture:true, pq:'', sq:'', sUnver:false, sArchived:false, summaryBasis:'paid'};
+/* ---------- 金額・締め期間 ---------- */
+const ck=(h,s)=>`${h.id}:${s.id}`;
+function getCount(key,h,s) { return S.counts[key]?.[ck(h,s)]||0; }
+function setCount(key,h,s,n) {
+  n=Math.max(0,Math.round(n)||0);
+  if (!Number.isSafeInteger(n)) return;
+  if (!S.counts[key]) S.counts[key]={};
+  if (n) S.counts[key][ck(h,s)]=n; else delete S.counts[key][ck(h,s)];
+  if (!Object.keys(S.counts[key]).length) delete S.counts[key];
+  save();
+}
+function emptyAmount() { return {base:0,inc:0,extra:0,salary:0,transport:0,tax:0,net:0,amt:0,cnt:0,hours:0,timedSalary:0,unknownTransport:false}; }
+function addAmount(a,b) {
+  for (const k of ['base','inc','extra','salary','transport','tax','net','amt','cnt','hours','timedSalary']) a[k]+=b[k];
+  a.unknownTransport ||= b.unknownTransport; return a;
+}
+function amountFor(h,s,n=1,e=null) {
+  const base=s.rate*n, inc=e ? h.incentives.reduce((a,i)=>a+i.amount*(own(e.inc,i.id)?e.inc[i.id]:0),0) : 0;
+  const extra=e?.extra??0, salary=base+inc+extra, tr=e?.transport??h.transport;
+  const transport=(tr??0)*n, tax=salary*(h.taxRate??0)/100;
+  return {base,inc,extra,salary,transport,tax,net:salary-tax+transport,
+    amt:salary+(S.settings.includeTransport?transport:0),cnt:n,hours:(s.hours??0)*n,timedSalary:s.hours?salary:0,unknownTransport:tr==null};
+}
+function entryAmount(e) { const h=S.hospitals.find(h=>h.id===e.h); return amountFor(h,h.shifts.find(s=>s.id===e.s),1,e); }
+function hospMonth(key,h,onlyCounts=false) {
+  const r=emptyAmount();
+  h.shifts.forEach(s=>{ const n=getCount(key,h,s); if(n) addAmount(r,amountFor(h,s,n)); });
+  if(!onlyCounts) S.entries.filter(e=>e.h===h.id && e.date.slice(0,7)===key).forEach(e=>addAmount(r,entryAmount(e)));
+  return r;
+}
+function monthTotal(key) {
+  const t=emptyAmount(); t.hosps=0;
+  S.hospitals.forEach(h=>{ const r=hospMonth(key,h); if(r.cnt) { t.hosps++; addAmount(t,r); } }); return t;
+}
+function workMonths() { return [...new Set([...Object.keys(S.counts),...S.entries.map(e=>e.date.slice(0,7))])].sort(); }
+const OFFSET_LABEL=['当月','翌月','翌々月','3ヶ月後','4ヶ月後'];
+function cycleText(h) { return `${h.closeDay>=99?'月末':h.closeDay+'日'}締め → ${OFFSET_LABEL[h.payOffset]}${h.payDay>=99?'末日':h.payDay+'日'}払い`; }
+/* 日本の祝日（2020〜2040年。2020/2021年の五輪特例も含む）。 */
+const holidayCache=new Map();
+function holidays(y) {
+  if(holidayCache.has(y)) return holidayCache.get(y);
+  const map=new Map(), add=(m,d,n)=>map.set(dateKey(new Date(y,m-1,d)),n);
+  const monday=(m,n)=>1+((8-new Date(y,m-1,1).getDay())%7)+(n-1)*7;
+  [[1,1,'元日'],[2,11,'建国記念の日'],[2,23,'天皇誕生日'],[4,29,'昭和の日'],[5,3,'憲法記念日'],[5,4,'みどりの日'],[5,5,'こどもの日'],[11,3,'文化の日'],[11,23,'勤労感謝の日']].forEach(a=>add(...a));
+  add(1,monday(1,2),'成人の日'); add(9,monday(9,3),'敬老の日');
+  add(3,Math.floor(20.8431+.242194*(y-1980)-Math.floor((y-1980)/4)),'春分の日');
+  add(9,Math.floor(23.2488+.242194*(y-1980)-Math.floor((y-1980)/4)),'秋分の日');
+  if(y===2020) { add(7,23,'海の日'); add(7,24,'スポーツの日'); add(8,10,'山の日'); }
+  else if(y===2021) { add(7,22,'海の日'); add(7,23,'スポーツの日'); add(8,8,'山の日'); }
+  else { add(7,monday(7,3),'海の日'); add(8,11,'山の日'); add(10,monday(10,2),'スポーツの日'); }
+  for(let dt=new Date(y,0,2);dt.getFullYear()===y;dt.setDate(dt.getDate()+1)) {
+    const prev=new Date(dt), next=new Date(dt); prev.setDate(prev.getDate()-1); next.setDate(next.getDate()+1);
+    if(!map.has(dateKey(dt)) && dt.getDay()!==0 && map.has(dateKey(prev)) && map.has(dateKey(next))) map.set(dateKey(dt),'国民の休日');
+  }
+  for(const k of [...map.keys()].sort()) {
+    const d=parseDate(k);
+    if(d.getDay()===0) { do{d.setDate(d.getDate()+1);}while(map.has(dateKey(d))); map.set(dateKey(d),'振替休日'); }
+  }
+  holidayCache.set(y,map); return map;
+}
+function holidayName(d) { if(typeof d==='string') d=parseDate(d); return holidays(d.getFullYear()).get(dateKey(d))||''; }
+function isHoliday(d) { return !!holidayName(d); }
+function businessDay(d) { return d.getDay()!==0 && d.getDay()!==6 && !isHoliday(d); }
+function payDateOf(y,m,h) {
+  const [py,pm]=shiftMonth(y,m,h.payOffset||0), ld=lastDay(py,pm);
+  const d=new Date(py,pm-1,h.payDay>=99?ld:Math.min(h.payDay,ld));
+  if(h.holidayRule==='before' || h.holidayRule==='after') while(!businessDay(d)) d.setDate(d.getDate()+(h.holidayRule==='before'?-1:1));
+  return d;
+}
+function periodOf(e,h) {
+  const [y,m,d]=e.date.split('-').map(Number);
+  return ymKey(...shiftMonth(y,m,h.closeDay>=99||d<=h.closeDay?0:1));
+}
+function entryPayDate(e) { const h=S.hospitals.find(h=>h.id===e.h); return payDateOf(...periodOf(e,h).split('-').map(Number),h); }
+function paymentKey(h,period) { return h.id+'|'+period; }
+function buildPayments() {
+  const groups=new Map();
+  function group(h,key) {
+    const pk=paymentKey(h,key);
+    if(!groups.has(pk)) {
+      const [y,m]=key.split('-').map(Number), dt=payDateOf(y,m,h);
+      groups.set(pk,{...emptyAmount(),key:pk,period:key,date:dt,dkey:dateKey(dt),pm:dateKey(dt).slice(0,7),hosp:h,workY:y,workM:m,approx:false,verified:h.verified,entries:[],legacyCnt:0});
+    }
+    return groups.get(pk);
+  }
+  for(const key of Object.keys(S.counts)) for(const h of S.hospitals) {
+    const r=hospMonth(key,h,true); if(!r.cnt) continue;
+    const p=group(h,key); addAmount(p,r); p.legacyCnt+=r.cnt; p.approx ||= h.closeDay<99;
+  }
+  for(const e of S.entries) {
+    const h=S.hospitals.find(h=>h.id===e.h), p=group(h,periodOf(e,h));
+    addAmount(p,entryAmount(e)); p.entries.push(e);
+  }
+  return [...groups.values()].map(p=>({...p,paid:S.paid[p.key]??{done:false,actual:null}})).sort((a,b)=>a.date-b.date||a.hosp.name.localeCompare(b.hosp.name,'ja')||a.period.localeCompare(b.period));
+}
+/* 入金実額は交通費を含む口座の額。控除率設定時は差額を手取り見込みと比較する。 */
+function expectedDeposit(p) { return p.net; }
+function invalidatePaid(keys) { for(const k of new Set(keys)) delete S.paid[k]; }
+function paidKeysForEntries(entries) { return entries.map(e=>{const h=S.hospitals.find(h=>h.id===e.h);return paymentKey(h,periodOf(e,h));}); }
+function yearSummary(y,basis) {
+  return S.hospitals.map(h=>{
+    const r=emptyAmount();
+    if(basis==='work') for(let m=1;m<=12;m++) addAmount(r,hospMonth(ymKey(y,m),h));
+    else for(const p of buildPayments()) if(p.hosp.id===h.id && p.date.getFullYear()===y) addAmount(r,p);
+    return {h,...r};
+  }).filter(r=>r.cnt).sort((a,b)=>b.salary-a.salary);
+}
+
+/* ---------- SVG チャート ---------- */
+function niceMax(v) {
+  if (v <= 0) return 1;
+  const p = Math.pow(10, Math.floor(Math.log10(v)));
+  for (const m of [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]) if (v <= m * p) return m * p;
+  return 10 * p;
+}
+function barPath(x, y, w, h, r) {
+  if (h <= 0.5) return '';
+  r = Math.min(r, w / 2, h);
+  return `M${x},${y + h}L${x},${y + r}Q${x},${y} ${x + r},${y}L${x + w - r},${y}Q${x + w},${y} ${x + w},${y + r}L${x + w},${y + h}Z`;
+}
+function barPathH(x, y, w, h, r) {
+  if (w <= 0.5) return '';
+  r = Math.min(r, h / 2, w);
+  return `M${x},${y}L${x + w - r},${y}Q${x + w},${y} ${x + w},${y + r}L${x + w},${y + h - r}Q${x + w},${y + h} ${x + w - r},${y + h}L${x},${y + h}Z`;
+}
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const compact = n => n >= 10000 ? (n / 10000).toFixed(n >= 100000 ? 0 : 1).replace(/\.0$/, '') + '万' : n.toLocaleString('ja-JP');
+
+/** 縦棒グラフ */
+function columnChart(box, items, opt = {}) {
+  box.innerHTML = '';
+  const W = 720, H = opt.height || 230;
+  const mL = 52, mR = 8, mT = 22, mB = 30;
+  const pw = W - mL - mR, ph = H - mT - mB;
+  const max = niceMax(Math.max(0, ...items.map(d => d.value)));
+  const band = pw / Math.max(1, items.length);
+  const bw = Math.min(24, band * 0.56);
+  const scale = v => ph * (v / max);
+  let g = '';
+  const ticks = 4;
+  for (let i = 0; i <= ticks; i++) {
+    const v = max * i / ticks, yy = mT + ph - scale(v);
+    if (i > 0) g += `<line class="gridline" x1="${mL}" y1="${yy}" x2="${W - mR}" y2="${yy}"/>`;
+    g += `<text class="tick tab" x="${mL - 8}" y="${yy + 3.5}" text-anchor="end">${i === 0 ? '0' : compact(v)}</text>`;
+  }
+  g += `<line class="base" x1="${mL}" y1="${mT + ph}" x2="${W - mR}" y2="${mT + ph}"/>`;
+  items.forEach((d, i) => {
+    const cx = mL + band * i + band / 2;
+    const bh = scale(d.value);
+    const x = cx - bw / 2, y = mT + ph - bh;
+    if (d.value > 0) g += `<path class="col${d.dim ? ' dim' : ''}" d="${barPath(x, y, bw, bh, 4)}"/>`;
+    if (d.value > 0 && (opt.labelAll || items.length <= 14))
+      g += `<text class="collab" x="${cx}" y="${y - 6}">${compact(d.value)}</text>`;
+    g += `<text class="tick" x="${cx}" y="${mT + ph + 15}" text-anchor="middle">${esc(d.label)}</text>`;
+    if (d.sublabel) g += `<text class="tick" x="${cx}" y="${mT + ph + 26}" text-anchor="middle" opacity=".8">${esc(d.sublabel)}</text>`;
+    g += `<rect class="colhit" x="${mL + band * i}" y="${mT}" width="${band}" height="${ph}" data-i="${i}"/>`;
+  });
+  box.innerHTML = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opt.aria || '棒グラフ')}">${g}</svg><div class="tip" id="tip-${box.id}"></div>`;
+  const svg = box.querySelector('svg'), tip = box.querySelector('.tip');
+  svg.addEventListener('mousemove', ev => {
+    const t = ev.target.closest('.colhit');
+    if (!t) { tip.classList.remove('on'); return; }
+    const d = items[+t.dataset.i];
+    const r = box.getBoundingClientRect();
+    tip.innerHTML = `<div class="tl">${esc(d.tipLabel || d.label)}</div><div class="tv">${YEN(d.value)}</div>${d.tipSub ? `<div class="tl">${esc(d.tipSub)}</div>` : ''}`;
+    tip.style.left = (ev.clientX - r.left) + 'px';
+    tip.style.top = (ev.clientY - r.top - 10) + 'px';
+    tip.classList.add('on');
+  });
+  svg.addEventListener('mouseleave', () => tip.classList.remove('on'));
+}
+
+/** 横棒グラフ */
+function barChartH(box, items, opt = {}) {
+  box.innerHTML = '';
+  if (!items.length) { box.innerHTML = '<div class="empty">データがありません</div>'; return; }
+  const W = 480, rowH = 22, mT = 6, mB = 4, mL = 118, mR = 62;
+  const H = mT + mB + rowH * items.length;
+  const pw = W - mL - mR;
+  const max = Math.max(1, ...items.map(d => d.value));
+  let g = '';
+  items.forEach((d, i) => {
+    const y = mT + rowH * i, bh = 13;
+    const bwid = pw * (d.value / max);
+    const name = d.label.length > 9 ? d.label.slice(0, 8) + '…' : d.label;
+    g += `<text class="hbar-lab" x="${mL - 8}" y="${y + bh - 2}" text-anchor="end">${esc(name)}</text>`;
+    g += `<path class="col" d="${barPathH(mL, y, Math.max(2, bwid), bh, 4)}"/>`;
+    g += `<text class="hbar-val" x="${mL + Math.max(2, bwid) + 6}" y="${y + bh - 2}">${compact(d.value)}</text>`;
+    g += `<rect class="colhit" x="0" y="${y - 3}" width="${W}" height="${rowH}" data-i="${i}"/>`;
+  });
+  box.innerHTML = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opt.aria || '横棒グラフ')}">${g}</svg><div class="tip"></div>`;
+  const svg = box.querySelector('svg'), tip = box.querySelector('.tip');
+  svg.addEventListener('mousemove', ev => {
+    const t = ev.target.closest('.colhit');
+    if (!t) { tip.classList.remove('on'); return; }
+    const d = items[+t.dataset.i], r = box.getBoundingClientRect();
+    tip.innerHTML = `<div class="tl">${esc(d.label)}</div><div class="tv">${YEN(d.value)}</div>${d.tipSub ? `<div class="tl">${esc(d.tipSub)}</div>` : ''}`;
+    tip.style.left = (ev.clientX - r.left) + 'px'; tip.style.top = (ev.clientY - r.top - 10) + 'px';
+    tip.classList.add('on');
+  });
+  svg.addEventListener('mouseleave', () => tip.classList.remove('on'));
+}
+</script>
+<script>
+/* =========================================================================
+   描画・イベント（既存のタブ、カード、グラフ、操作をv2に拡張）
+   ========================================================================= */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+let eSticky=new Set(), eOrder=[], eOrderStamp=null;
+function breakdown(r) { return `給与 ${YEN(r.salary)} ＋ 交通費 ${YEN(r.transport)}${S.settings.includeTransport?'':'（合計には含めない）'}`; }
+function detailAmount(r) { return `基本給 ${YEN(r.base)} / インセンティブ ${YEN(r.inc)} / その他 ${YEN(r.extra)} / 交通費 ${YEN(r.transport)}`; }
+function taxHint(r,h) { return h.taxRate==null?'':`手取り見込み ${YEN(r.salary-r.tax)} ＋ 交通費 ${YEN(r.transport)}（控除 ${h.taxRate}%）`; }
+function transportBadge(r) { return r.unknownTransport?'<span class="badge warn">交通費未登録</span>':''; }
+function tableHTML(headers,rows,footer=null) {
+  const row=(cells)=>'<tr>'+cells.map((v,i)=>`<td data-label="${esc(headers[i])}"${i?' class="num"':''}>${esc(v)}</td>`).join('')+'</tr>';
+  return '<thead><tr>'+headers.map(h=>`<th>${esc(h)}</th>`).join('')+'</tr></thead><tbody>'+(rows.length?rows.map(row).join(''):`<tr><td colspan="${headers.length}">入力がありません</td></tr>`)+ '</tbody>'+(footer?'<tfoot>'+row(footer)+'</tfoot>':'');
+}
+function resetOrder() {eSticky.clear();eOrderStamp=null;}
+function renderStorageWarn() {
+  $('#storageWarn').innerHTML=loadProblem ? `<div class="notice" style="margin-top:16px"><div><b>保存データを読み込めませんでした。</b> ${esc(loadProblem)}。元の保存データを保護するため自動保存を停止しています。<button class="link" id="rescueData">元のJSONを救出</button>してから、データタブで読み込み直すか初期化してください。</div></div>` : storageOK?'': '<div class="notice" style="margin-top:16px"><div><b>この環境ではデータを保存できません。</b> JSONバックアップを保管してください。保存できるブラウザでこのHTMLを直接開いてください。</div></div>';
+  if($('#rescueData')) $('#rescueData').onclick=()=>download('保存データ救出.json',localStorage.getItem(STORE_KEY)||'{}');
+}
+function renderWelcome() {
+  const empty=!S.hospitals.length && !S.entries.length && !Object.keys(S.counts).length;
+  $('#welcome').innerHTML=empty?'<div class="card card-pad" style="margin-top:16px"><h2 class="sec-title">当直バイト給与管理へようこそ</h2><p class="sec-sub">旧版の「↓ バックアップ」でJSONを書き出し、ここで読み込むと以前のデータを引き継げます。</p><div class="btnrow"><button class="btn" id="wImport">以前のデータを読み込む（JSON）</button><button class="btn ghost" id="wAdd">病院を追加して始める</button></div></div>':'';
+  if(empty) {$('#wImport').onclick=()=>$('#dImport').click();$('#wAdd').onclick=()=>{setView('settings');addHospital();};}
+  const since=S.lastBackup||S.createdAt;
+  const days=since?Math.floor((Date.now()-Date.parse(since))/86400000):0;
+  $('#backupNotice').innerHTML=!empty&&days>=30?'<div class="notice info" style="margin-top:14px"><div>30日以上バックアップしていません。<button class="link" id="backupNow">JSONを書き出す</button></div></div>':'';
+  if($('#backupNow')) $('#backupNow').onclick=backup;
+}
+function setView(v) {
+  U.view=v;
+  $$('.tab').forEach(t=>t.setAttribute('aria-selected',String(t.dataset.view===v)));
+  $$('.view').forEach(s=>s.classList.toggle('active',s.id==='view-'+v));
+  render(); window.scrollTo({top:0,behavior:'instant'});
+}
+$$('.tab').forEach(t=>t.onclick=()=>setView(t.dataset.view));
+/* ---------- 勤務入力 ---------- */
+function renderCalendar() {
+  const y=U.ey,m=U.em,key=ymKey(y,m), pays=new Map();
+  buildPayments().filter(p=>p.pm===key).forEach(p=>pays.set(p.dkey,(pays.get(p.dkey)||0)+p.amt));
+  const byDay=new Map();
+  S.entries.filter(e=>e.date.startsWith(key+'-')).forEach(e=>{ if(!byDay.has(e.date))byDay.set(e.date,[]);byDay.get(e.date).push(e); });
+  let html=DOW.map((d,i)=>`<div class="caldow${i===0?' sun':i===6?' sat':''}">${d}</div>`).join('');
+  html+='<div></div>'.repeat(new Date(y,m-1,1).getDay());
+  for(let d=1;d<=lastDay(y,m);d++) {
+    const dt=new Date(y,m-1,d),dk=dateKey(dt), hn=holidayName(dt),entries=byDay.get(dk)||[];
+    const lines=entries.map(e=>{const h=S.hospitals.find(h=>h.id===e.h),s=h.shifts.find(s=>s.id===e.s);return `${h.name.slice(0,5)}・${s.kind}`;});
+    html+=`<button class="calday${dt.getDay()===0?' sun':dt.getDay()===6?' sat':''}${hn?' holiday':''}${dk===dateKey(TODAY)?' today':''}" data-date="${dk}" aria-label="${esc(dk+' '+hn+' '+lines.join('、')+(pays.has(dk)?' 入金予定 '+YEN(pays.get(dk)):''))}"><span>${d}</span>${hn?`<span class="calholiday">${esc(hn)}</span>`:''}${lines.map(t=>`<span class="calevent">${esc(t)}</span>`).join('')}${pays.has(dk)?`<span class="calpay" title="${esc(YEN(pays.get(dk)))}">¥${esc(compact(pays.get(dk)))}</span>`:''}</button>`;
+  }
+  $('#eCalendar').innerHTML=html;
+}
+function renderEntry() {
+  const key=ymKey(U.ey,U.em),tot=monthTotal(key),[py,pm]=shiftMonth(U.ey,U.em,-1),prev=monthTotal(ymKey(py,pm));
+  $('#eLabel').textContent=`${U.ey}年 ${U.em}月`; $('#eTotal').textContent=YEN(tot.amt);
+  $('#eSub').innerHTML=esc(`${tot.cnt}回 / ${tot.hosps}病院・${breakdown(tot)}`)+(tot.amt&&prev.amt?`<br>前月比 ${esc(YEN(tot.amt-prev.amt))}`:'')+' '+transportBadge(tot);
+  renderCalendar();
+  const q=U.eq.trim(),list=S.hospitals.filter(h=>!h.archived&&(!q||h.name.includes(q)||h.shifts.some(s=>s.kind.includes(q)))&&(!U.onlyEntered||hospMonth(key,h).cnt||eSticky.has(h.id)));
+  const stamp=`${key}|${q}|${U.onlyEntered}`;
+  if(eOrderStamp!==stamp) {eOrder=[...list.filter(h=>hospMonth(key,h).cnt),...list.filter(h=>!hospMonth(key,h).cnt)].map(h=>h.id);eOrderStamp=stamp;}
+  const pos=new Map(eOrder.map((id,i)=>[id,i]));
+  const ordered=list.slice().sort((a,b)=>(pos.get(a.id)??9999)-(pos.get(b.id)??9999));
+  ordered.forEach(h=>{if(hospMonth(key,h).cnt)eSticky.add(h.id);});
+  $('#eList').innerHTML=ordered.length?ordered.map(h=>{
+    const r=hospMonth(key,h),es=S.entries.filter(e=>e.h===h.id&&e.date.slice(0,7)===key).sort((a,b)=>a.date.localeCompare(b.date));
+    return `<div class="hcard${r.cnt?' has':''}"><div class="hhead"><span class="hname">${esc(h.name)}</span><span class="hcycle">${esc(cycleText(h))} ${h.verified?'':'<span class="badge">支払設定未確認</span>'}</span><span class="hsub${r.cnt?'':' zero'}">${esc(YEN(r.amt))} / ${r.cnt}回</span></div>${r.cnt?`<div class="entrychips detail">${esc(breakdown(r))} ${transportBadge(r)}${h.taxRate!=null?'<br>'+esc(taxHint(r,h)):''}</div>`:''}<div class="datechips entrychips">${es.map(e=>{const s=h.shifts.find(s=>s.id===e.s);return `<button class="chip" data-edit="${esc(e.id)}">${esc(e.date.slice(5)+' '+s.kind)} → ${esc(dateKey(entryPayDate(e)).slice(5))}入金</button>`;}).join('')}</div>${h.shifts.map(s=>{
+      const n=getCount(key,h,s),a=amountFor(h,s,n);
+      return `<div class="srow"><span class="skind">${esc(s.kind)}</span><span class="srate">${esc(YEN(s.rate))}</span><span class="undated-label">日付未登録の回数 ${n&&h.closeDay<99?'<span class="badge warn">概算</span>':''}</span><span class="stepper"><button data-act="dec" data-h="${esc(h.id)}" data-s="${esc(s.id)}" ${n?'':'disabled'} aria-label="${esc(h.name+' '+s.kind+'を減らす')}">−</button><input class="n" type="number" min="0" step="1" value="${n}" data-act="set" data-h="${esc(h.id)}" data-s="${esc(s.id)}" aria-label="${esc(h.name+' '+s.kind+' 日付未登録の回数')}"><button data-act="inc" data-h="${esc(h.id)}" data-s="${esc(s.id)}" aria-label="${esc(h.name+' '+s.kind+'を増やす')}">＋</button></span><span class="samt">${n?esc(YEN(a.amt)):'—'}</span>${n?`<button class="mini" data-convert="1" data-h="${esc(h.id)}" data-s="${esc(s.id)}">日付を登録</button><span class="detail">入金予定 ${esc(dateKey(payDateOf(U.ey,U.em,h)))}</span>`:''}</div>`;
+    }).join('')}</div>`;
+  }).join(''):'<div class="card empty">表示する病院がありません。病院設定で追加・アーカイブ解除できます。</div>';
+}
+$('#eCalendar').onclick=ev=>{const b=ev.target.closest('[data-date]');if(b)openEntry(b.dataset.date);};
+$('#eList').onclick=ev=>{
+  const edit=ev.target.closest('[data-edit]');if(edit){const e=S.entries.find(e=>e.id===edit.dataset.edit);openEntry(e.date,e.id);return;}
+  const b=ev.target.closest('button[data-h]');if(!b)return;
+  const h=S.hospitals.find(h=>h.id===b.dataset.h),s=h?.shifts.find(s=>s.id===b.dataset.s);if(!s)return;
+  if(b.dataset.convert){openEntry(ymKey(U.ey,U.em)+'-01',null,{key:ymKey(U.ey,U.em),h:h.id,s:s.id});return;}
+  if(b.dataset.act){changeUndatedCount(h,s,getCount(ymKey(U.ey,U.em),h,s)+(b.dataset.act==='inc'?1:-1));}
+};
+$('#eList').onchange=ev=>{
+  const i=ev.target.closest('input[data-act="set"]');if(!i)return;
+  const h=S.hospitals.find(h=>h.id===i.dataset.h),s=h?.shifts.find(s=>s.id===i.dataset.s);if(!s)return;
+  changeUndatedCount(h,s,+i.value);
+};
+function changeUndatedCount(h,s,n){
+  const month=ymKey(U.ey,U.em),key=paymentKey(h,month);
+  if(!Number.isSafeInteger(Math.max(0,Math.round(n)||0))){alert('回数が大きすぎます。');renderEntry();return;}
+  if(getCount(month,h,s)===Math.max(0,Math.round(n)||0)){renderEntry();return;}
+  if(own(S.paid,key)&&!confirm('回数の変更に関連する入金確認・実際の入金額を解除します。よろしいですか？')){renderEntry();return;}
+  invalidatePaid([key]);setCount(month,h,s,n);prunePaid();renderEntry();
+}
+function moveEntryMonth(d){[U.ey,U.em]=shiftMonth(U.ey,U.em,d);resetOrder();renderEntry();}
+$('#ePrev').onclick=()=>moveEntryMonth(-1);$('#eNext').onclick=()=>moveEntryMonth(1);
+$('#eToday').onclick=()=>{U.ey=TY;U.em=TM;resetOrder();renderEntry();};
+$('#eSearch').oninput=ev=>{U.eq=ev.target.value;resetOrder();renderEntry();};
+$('#eOnlyEntered').onclick=ev=>{U.onlyEntered=!U.onlyEntered;ev.currentTarget.setAttribute('aria-pressed',String(U.onlyEntered));resetOrder();renderEntry();};
+function prunePaid(){const keys=new Set(buildPayments().map(p=>p.key));for(const k of Object.keys(S.paid))if(!keys.has(k))delete S.paid[k];save();}
+$('#eCopyPrev').onclick=()=>{
+  const [py,pm]=shiftMonth(U.ey,U.em,-1),src=S.counts[ymKey(py,pm)],key=ymKey(U.ey,U.em);
+  if(!src||!Object.keys(src).length){alert('前月に日付未登録の回数がありません。日付つき勤務はコピーしません。');return;}
+  if(!confirm(`${py}年${pm}月の日付未登録の回数だけをコピーし、${key}の日付未登録の回数を置き換えます。日付つき勤務はコピーせず、この月の勤務は残します。関連する入金確認は解除します。よろしいですか？`))return;
+  invalidatePaid(S.hospitals.map(h=>paymentKey(h,key)));S.counts[key]=clone(src);save();resetOrder();render();
+};
+$('#eClear').onclick=()=>{
+  const key=ymKey(U.ey,U.em),es=S.entries.filter(e=>e.date.slice(0,7)===key);
+  if(!S.counts[key]&&!es.length)return;
+  if(!confirm(`${key}の日付つき勤務と日付未登録の回数をすべて消します。関連する入金確認・実額も消えます。よろしいですか？`))return;
+  invalidatePaid([...paidKeysForEntries(es),...S.hospitals.map(h=>paymentKey(h,key))]);delete S.counts[key];S.entries=S.entries.filter(e=>e.date.slice(0,7)!==key);save();resetOrder();render();
+};
+/* ---------- 勤務ダイアログ ---------- */
+let editingId=null, conversion=null;
+function recentHospitals(){const order=new Map();S.entries.forEach((e,i)=>order.set(e.h,i));return S.hospitals.slice().sort((a,b)=>(order.get(b.id)??-1)-(order.get(a.id)??-1));}
+function fillHospitals(selected=''){
+  const q=$('#fSearch').value.trim();
+  const hs=recentHospitals().filter(h=>(!h.archived||h.id===selected)&&(!q||h.name.includes(q)||h.id===selected));
+  $('#fHospital').innerHTML=hs.map(h=>`<option value="${esc(h.id)}"${h.id===selected?' selected':''}>${esc(h.name)}${h.archived?'（アーカイブ）':''}</option>`).join('');
+}
+function fillShiftFields(e=null){
+  const h=S.hospitals.find(h=>h.id===$('#fHospital').value);
+  $('#fShift').innerHTML=(h?.shifts||[]).map(s=>`<option value="${esc(s.id)}"${s.id===e?.s?' selected':''}>${esc(s.kind)}（${esc(YEN(s.rate))}）</option>`).join('');
+  $('#fIncentives').innerHTML=(h?.incentives||[]).map(i=>`<div class="incstep"><span>${esc(i.name)} <span class="detail">${esc(YEN(i.amount))}/件</span></span><span class="stepper"><button type="button" data-inc-step="-1" data-i="${esc(i.id)}" aria-label="${esc(i.name+'を減らす')}">−</button><input class="n" type="number" min="0" step="1" value="${esc(e?.inc?.[i.id]??0)}" data-inc="${esc(i.id)}" aria-label="${esc(i.name+'の件数')}"><button type="button" data-inc-step="1" data-i="${esc(i.id)}" aria-label="${esc(i.name+'を増やす')}">＋</button></span></div>`).join('');
+  $('#fTransport').placeholder=h?.transport==null?'未登録（既定なし）':String(h.transport);
+  $('#fHospital').disabled=!!conversion;$('#fShift').disabled=!!conversion;$('#fSearch').disabled=!!conversion;
+  $('#fSave').disabled=!h?.shifts.length;
+}
+function openEntry(date,id=null,conv=null){
+  editingId=id;conversion=conv;
+  const e=S.entries.find(e=>e.id===id)||null;
+  $('#entryTitle').textContent=e?'勤務を編集':conv?'日付未登録の回数を日付つきへ':'勤務を登録';
+  $('#fDate').value=e?.date||date;$('#fDate').min=conv?conv.key+'-01':'';$('#fDate').max=conv?conv.key+'-'+lastDay(...conv.key.split('-').map(Number)):'';
+  $('#fSearch').value='';fillHospitals(e?.h||conv?.h||'');
+  $('#fExtra').value=e?.extra??0;$('#fTransport').value=e?.transport??'';$('#fMemo').value=e?.memo??'';
+  fillShiftFields(e|| (conv?{s:conv.s}:null));
+  $('#fDelete').hidden=!e;$('#fNew').hidden=!!conv;$('#eConvertNote').textContent=conv?'保存時にこの月の未登録回数を1回減らし、勤務を1件作成します。':'';
+  updateDayList();previewEntry();if(!$('#entryDialog').open)$('#entryDialog').showModal();
+}
+function updateDayList(){
+  const es=S.entries.filter(e=>e.date===$('#fDate').value);
+  $('#eDayList').innerHTML=es.map(e=>{const h=S.hospitals.find(h=>h.id===e.h);return `<button type="button" class="chip" aria-pressed="${e.id===editingId}" data-dialog-edit="${esc(e.id)}">${esc(h.name+' '+h.shifts.find(s=>s.id===e.s).kind)}</button>`;}).join('');
+}
+function readEntry(){
+  const inc=Object.create(null);$$('#fIncentives input[data-inc]').forEach(i=>{if(+i.value)inc[i.dataset.inc]=+i.value;});
+  return {id:editingId||newId('e',S.entries),date:$('#fDate').value,h:$('#fHospital').value,s:$('#fShift').value,inc,extra:+$('#fExtra').value||0,transport:$('#fTransport').value===''?null:+$('#fTransport').value,memo:$('#fMemo').value};
+}
+function previewEntry(){
+  const e=readEntry(),h=S.hospitals.find(h=>h.id===e.h),s=h?.shifts.find(s=>s.id===e.s);
+  const dup=S.entries.filter(x=>x.date===e.date&&x.id!==editingId);
+  $('#fDuplicate').innerHTML=dup.length?`<div class="notice"><div>この日にはすでに ${dup.length} 件の勤務があります。重複を確認してください（追加登録は可能です）。</div></div>`:'';
+  if(!h||!s||!validDate(e.date)){$('#fPreview').textContent='病院・勤務種別・日付を選んでください。';return;}
+  const r=amountFor(h,s,1,e),d=entryPayDate(e);
+  $('#fPreview').innerHTML=`<b>この勤務の金額 ${esc(YEN(r.amt))}</b><div>${esc(breakdown(r))}</div><div class="detail">${esc(detailAmount(r))}</div><div>入金予定日 ${esc(dateKey(d))}（${DOW[d.getDay()]}） ${h.verified?'':'<span class="badge">支払設定未確認</span>'}</div>${transportBadge(r)}<div class="detail">${esc(taxHint(r,h))}</div>`;
+}
+$('#fSearch').oninput=()=>{const draft=readEntry(),sel=draft.h,q=$('#fSearch').value.trim(),h=S.hospitals.find(h=>h.id===sel);fillHospitals(h?.name.includes(q)?sel:'');fillShiftFields($('#fHospital').value===sel?draft:null);previewEntry();};
+$('#fHospital').onchange=()=>{fillShiftFields();previewEntry();};
+$('#entryForm').addEventListener('input',ev=>{if(ev.target.id==='fDate')updateDayList();previewEntry();});
+$('#entryForm').addEventListener('change',previewEntry);
+$('#entryForm').onclick=ev=>{
+  const b=ev.target.closest('[data-inc-step]');if(b){const i=$$('#fIncentives input').find(i=>i.dataset.inc===b.dataset.i);i.value=Math.max(0,(+i.value||0)+ +b.dataset.incStep);previewEntry();}
+  const edit=ev.target.closest('[data-dialog-edit]');if(edit){const e=S.entries.find(e=>e.id===edit.dataset.dialogEdit);openEntry(e.date,e.id);}
+};
+$('#eClose').onclick=()=>$('#entryDialog').close();
+$('#fNew').onclick=()=>openEntry($('#fDate').value);
+$('#entryForm').onsubmit=ev=>{
+  ev.preventDefault();if(!$('#entryForm').reportValidity())return;
+  const e=readEntry(),h=S.hospitals.find(h=>h.id===e.h);
+  try{migrate({...S,entries:[...S.entries.filter(x=>x.id!==editingId),e]});}catch(err){alert(err.message);return;}
+  const old=S.entries.find(x=>x.id===editingId);
+  const affected=[...(old?paidKeysForEntries([old]):[]),...paidKeysForEntries([e]),...(conversion?[paymentKey(h,conversion.key)]:[])];
+  if(affected.some(k=>own(S.paid,k))&&!confirm('この変更に関連する入金確認・実際の入金額を解除します。よろしいですか？'))return;
+  if(conversion){const s=h.shifts.find(s=>s.id===conversion.s),n=getCount(conversion.key,h,s);if(!n){alert('日付未登録の回数がありません。');return;}setCount(conversion.key,h,s,n-1);}
+  invalidatePaid(affected);S.entries=S.entries.filter(x=>x.id!==editingId);S.entries.push(e);save();$('#entryDialog').close();resetOrder();render();
+};
+$('#fDelete').onclick=()=>{
+  const e=S.entries.find(e=>e.id===editingId);if(!e)return;
+  if(!confirm('この勤務を削除します。関連する入金確認・実際の入金額も解除します。よろしいですか？'))return;
+  invalidatePaid(paidKeysForEntries([e]));S.entries=S.entries.filter(x=>x.id!==e.id);save();$('#entryDialog').close();render();
+};
+function newId(prefix,list){return prefix+(list.reduce((n,x)=>Math.max(n,/^\d+$/.test(x.id.slice(prefix.length))?+x.id.slice(prefix.length):0),0)+1);}
+/* ---------- 月別収入 ---------- */
+function renderMonthly(){
+  const y=U.yy,months=Array.from({length:12},(_,i)=>({m:i+1,...monthTotal(ymKey(y,i+1)),future:y>TY||(y===TY&&i+1>=TM)})),total=emptyAmount();
+  months.forEach(d=>addAmount(total,d));const worked=months.filter(d=>d.cnt);
+  $('#yLabel').textContent=y+'年';$('#yTotal').textContent=YEN(total.amt);$('#ySub').textContent=`${total.cnt}回 / 稼働${worked.length}ヶ月・${breakdown(total)}`;
+  const goal=S.settings.goalYear,pct=goal?total.amt/goal*100:0;
+  $('#yGoal').innerHTML=goal?`<div style="margin-top:14px">年間目標 ${esc(YEN(goal))} / 達成率 ${pct.toFixed(1)}%<div class="progress" role="progressbar" aria-label="年間目標の進捗" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.max(0,Math.min(100,pct))}"><span style="width:${Math.max(0,Math.min(100,pct))}%"></span></div>${esc(YEN(Math.max(0,goal-total.amt)))} あと必要</div>`:'';
+  columnChart($('#yChart'),months.map(d=>({label:d.m+'月',value:d.amt,dim:d.future,tipLabel:`${y}年${d.m}月の勤務`,tipSub:`${d.cnt}回 / ${breakdown(d)}`})),{aria:y+'年の月別収入',height:240});
+  $('#yTable').classList.add('mobile-cards');
+  $('#yTable').innerHTML=tableHTML(['月','回数','給与','うちインセンティブ','交通費','合計','前月比'],months.map(d=>{const[py,pm]=shiftMonth(y,d.m,-1),prev=monthTotal(ymKey(py,pm)).amt;return [d.m+'月',d.cnt,YEN(d.salary),YEN(d.inc),YEN(d.transport),YEN(d.amt),YEN(d.amt-prev)];}),['年間合計',total.cnt,YEN(total.salary),YEN(total.inc),YEN(total.transport),YEN(total.amt),'']);
+  const perH=yearSummary(y,'work');
+  barChartH($('#yHosp'),perH.slice(0,15).map(r=>({label:r.h.name,value:r.amt,tipSub:r.cnt+'回 / '+breakdown(r)})),{aria:y+'年の病院別収入'});
+  $('#yHospTable').innerHTML=tableHTML(['病院','回数','給与','平均単価','時給換算','交通費'],perH.map(r=>[r.h.name+(r.h.archived?'（アーカイブ）':''),r.cnt,YEN(r.salary),YEN(r.salary/r.cnt),r.hours?YEN(r.timedSalary/r.hours)+'/時':'時間未登録',YEN(r.transport)]));
+  $('#yBasis').value=U.summaryBasis;
+  const sum=yearSummary(y,U.summaryBasis),st=emptyAmount();sum.forEach(r=>addAmount(st,r));
+  $('#ySummary').innerHTML=tableHTML(['病院','年間支給額（給与）','交通費','控除見込み額'],sum.map(r=>[r.h.name,YEN(r.salary),YEN(r.transport),r.h.taxRate==null?'未設定':YEN(r.tax)]),['年間合計',YEN(st.salary),YEN(st.transport),YEN(st.tax)+'（設定分）']);
+}
+$('#yPrev').onclick=()=>{U.yy--;renderMonthly();};$('#yNext').onclick=()=>{U.yy++;renderMonthly();};$('#yBasis').onchange=ev=>{U.summaryBasis=ev.target.value;renderMonthly();};
+$('#yCsv').onclick=()=>download(`年間サマリ_${U.yy}_${U.summaryBasis}.csv`,csv([['年','基準','病院','年間支給額（給与）','交通費','控除見込み額'],...yearSummary(U.yy,U.summaryBasis).map(r=>[U.yy,U.summaryBasis==='paid'?'入金日（予定含む）':'勤務日',r.h.name,r.salary,r.transport,r.h.taxRate==null?'未設定':r.tax])]),'text/csv');
+/* ---------- 入金予定 ---------- */
+function renderPay(){
+  const all=buildPayments(),pending=all.filter(p=>!p.paid.done),late=pending.filter(p=>p.date<TODAY),unver=new Set(all.filter(p=>!p.verified).map(p=>p.hosp.id));
+  $('#payWarn').innerHTML=(late.length?`<div class="notice"><div><b>未確認の入金 ${late.length}件・${esc(YEN(late.reduce((a,p)=>a+p.amt,0)))}</b><details><summary>明細・入金確認</summary>${late.map(p=>esc(p.dkey+' '+p.hosp.name)).join('、')}<br><button class="link" id="showOverdue">過去の入金も表示して確認</button><br><button class="link" id="confirmOverdue">予定日を過ぎた分をすべて入金確認済みにする</button></details></div></div>`:'')+(unver.size?`<div class="notice"><div>支払設定が未確認の病院が ${unver.size} 件あります。病院設定で実際の締め日・支払日を確認してください。</div></div>`:'');
+  if($('#showOverdue'))$('#showOverdue').onclick=()=>{U.pFuture=false;$('#pOnlyFuture').setAttribute('aria-pressed','false');renderPay();};
+  if($('#confirmOverdue'))$('#confirmOverdue').onclick=()=>{
+    if(!confirm(`予定日を過ぎた未確認の入金 ${late.length}件をすべて入金確認済みにします。よろしいですか？`))return;
+    late.forEach(p=>{S.paid[p.key]??={done:false,actual:null};S.paid[p.key].done=true;});save();renderPay();
+  };
+  const future=pending.filter(p=>p.date>=TODAY),next=future[0];
+  $('#pNextAmt').textContent=next?YEN(future.filter(p=>p.dkey===next.dkey).reduce((a,p)=>a+p.amt,0)):'—';
+  $('#pNextWhen').textContent=next?`${next.dkey}（${DOW[next.date.getDay()]}）・${future.filter(p=>p.dkey===next.dkey).map(p=>p.hosp.name).join('、')}`:'予定はありません';
+  const in30=new Date(TODAY);in30.setDate(in30.getDate()+30);
+  $('#p30').textContent=YEN(future.filter(p=>p.date<=in30).reduce((a,p)=>a+p.amt,0));$('#pPending').textContent=YEN(pending.reduce((a,p)=>a+p.amt,0));
+  const byMonth=new Map();all.forEach(p=>{const r=byMonth.get(p.pm)||{amt:0,upcoming:false};r.amt+=p.amt;r.upcoming ||= !p.paid.done;byMonth.set(p.pm,r);});
+  const keys=[...byMonth.keys()].sort();
+  if(keys.length)columnChart($('#pChart'),keys.map(k=>({label:k.slice(5)+'月',sublabel:k.slice(0,4),value:byMonth.get(k).amt,dim:byMonth.get(k).upcoming,tipLabel:k,tipSub:'入金予定日で集計'})),{aria:'振込月ごとの入金額',height:240});else $('#pChart').innerHTML='<div class="empty">入金予定がありません</div>';
+  const q=U.pq.trim(),shown=all.filter(p=>(!U.pFuture||p.date>=TODAY)&&(!q||p.hosp.name.includes(q))),groups=[];
+  shown.forEach(p=>{if(!groups.length||groups.at(-1).dkey!==p.dkey)groups.push({dkey:p.dkey,items:[]});groups.at(-1).items.push(p);});
+  $('#pList').innerHTML=groups.length?groups.map(g=>`<div class="paygroup${next?.dkey===g.dkey?' next':''}"><div class="payhead"><span class="paydate">${esc(g.dkey)}</span><span class="paydow">（${DOW[g.items[0].date.getDay()]}）</span><span class="paytot">${esc(YEN(g.items.reduce((a,p)=>a+p.amt,0)))}</span></div>${g.items.map(p=>`<div class="payline" data-pay="${esc(p.key)}"><span class="hn">${esc(p.hosp.name)}</span><span class="wm">${esc(p.period)} 締め期間分・${p.cnt}回 ${p.approx?'<span class="badge warn">日付未登録分は概算</span>':''} ${p.verified?'':'<span class="badge">支払設定未確認</span>'}</span><span class="amt">${esc(YEN(p.amt))}</span><div class="paydetail detail">${esc(detailAmount(p))}<br>${esc(breakdown(p))} ${transportBadge(p)}${p.hosp.taxRate!=null?'<br>'+esc(taxHint(p,p.hosp)):''}</div>${p.entries.length?`<div class="paydetail detail">勤務日 ${p.entries.map(e=>esc(e.date)).join('、')}${p.legacyCnt?' / 日付未登録 '+p.legacyCnt+'回':''}</div>`:''}<div class="paycontrols"><label class="chk"><input type="checkbox" data-paid="done" ${p.paid.done?'checked':''}>入金確認</label><label>実際の入金額（円） <input class="inp num" type="number" min="0" step="1" data-paid="actual" value="${esc(p.paid.actual??'')}" placeholder="未入力"></label><span class="detail">振込見込み ${esc(YEN(expectedDeposit(p)))}（交通費込み${p.hosp.taxRate==null?'・控除未設定':''}）${p.paid.actual==null?'':' / 差額 '+esc(YEN(p.paid.actual-expectedDeposit(p)))}</span></div></div>`).join('')}</div>`).join(''):'<div class="card empty">該当する入金予定がありません。</div>';
+}
+$('#pList').onchange=ev=>{
+  const i=ev.target.closest('input[data-paid]');if(!i)return;if(!i.checkValidity()){i.reportValidity();return;}
+  const key=i.closest('[data-pay]').dataset.pay,p=S.paid[key]||{done:false,actual:null};
+  if(i.dataset.paid==='done')p.done=i.checked;else p.actual=i.value===''?null:+i.value;
+  S.paid[key]=p;save();renderPay();
+};
+$('#pOnlyFuture').onclick=ev=>{U.pFuture=!U.pFuture;ev.currentTarget.setAttribute('aria-pressed',String(U.pFuture));renderPay();};$('#pSearch').oninput=ev=>{U.pq=ev.target.value;renderPay();};
+/* ---------- 病院設定 ---------- */
+function dayOptions(sel,includeLast,maxDay){let o=includeLast?`<option value="99"${sel>=99?' selected':''}>末日</option>`:'';for(let d=1;d<=maxDay;d++)o+=`<option value="${d}"${sel===d?' selected':''}>${d}日</option>`;return o;}
+function settingInput(label,field,value,type='number',attrs=''){return `<label>${label}<input class="inp" data-f="${field}" type="${type}" value="${esc(value??'')}" ${attrs}></label>`;}
+function renderSettings(){
+  const q=U.sq.trim(),list=S.hospitals.filter(h=>(U.sArchived||!h.archived)&&(!q||h.name.includes(q))&&(!U.sUnver||!h.verified));
+  $('#sOnlyUnverified').setAttribute('aria-pressed',String(U.sUnver));$('#sShowArchived').setAttribute('aria-pressed',String(U.sArchived));
+  $('#sTable').innerHTML=list.length?list.map(h=>`<div class="scard${h.verified?'':' unver'}${h.archived?' archived':''}" data-h="${esc(h.id)}"><div class="srow-top"><input class="inp w-name" value="${esc(h.name)}" data-f="name" aria-label="病院名" style="flex:1 1 180px"><label class="chk"><input type="checkbox" data-f="archived" ${h.archived?'checked':''}>アーカイブ</label><button class="del" data-f="delh" title="病院を削除" aria-label="病院を削除">✕</button></div><div class="srow-cyc"><label>締め日 <select class="inp" data-f="closeDay" style="width:auto">${dayOptions(h.closeDay,true,31)}</select></label><label>支払 <select class="inp" data-f="payOffset" style="width:auto">${OFFSET_LABEL.map((l,i)=>`<option value="${i}"${h.payOffset===i?' selected':''}>${l}</option>`).join('')}</select></label><label>支払日 <select class="inp" data-f="payDay" style="width:auto">${dayOptions(h.payDay,true,31)}</select></label><span class="cycpv">${esc(cycleText(h))}</span><label class="chk"><input type="checkbox" data-f="verified" ${h.verified?'checked':''}>確認済み</label></div><div class="fieldgrid">${settingInput('交通費（1勤務・円、空欄=未登録）','transport',h.transport,'number','min="0" step="1" placeholder="未登録"')}${settingInput('控除率（%、空欄=未設定）','taxRate',h.taxRate,'number','min="0" max="100" step="0.01" placeholder="未設定"')}<label>支払日が土日祝のとき<select class="inp" data-f="holidayRule">${[['none','そのまま'],['before','前営業日'],['after','翌営業日']].map(([v,l])=>`<option value="${v}"${h.holidayRule===v?' selected':''}>${l}</option>`).join('')}</select></label></div><div class="skinds">${h.shifts.map(s=>`<div class="skind-row" data-s="${esc(s.id)}"><label>種別<input class="inp" value="${esc(s.kind)}" data-f="kind"></label><label>単価（円）<input class="inp num" type="number" min="0" step="1" value="${esc(s.rate)}" data-f="rate"></label><label>時間<input class="inp num" type="number" min="0.01" step="0.01" value="${esc(s.hours??'')}" placeholder="任意" data-f="hours"></label><button class="del" data-f="dels" aria-label="勤務種別を削除">✕</button></div>`).join('')}<div><button class="mini" data-f="adds">＋ 勤務種別を追加</button></div></div><div class="skinds"><h3 class="sec-title">インセンティブ（単価×件数）</h3>${h.incentives.map(i=>`<div class="skind-row" data-i="${esc(i.id)}"><label>名称<input class="inp" value="${esc(i.name)}" data-f="incName"></label><label>単価（円）<input class="inp num" type="number" min="0" step="1" value="${esc(i.amount)}" data-f="incAmount"></label><button class="del" data-f="deli" aria-label="インセンティブ定義を削除">✕</button></div>`).join('')}<div class="btnrow" style="margin-top:4px"><button class="mini" data-f="addi">＋ 定義を追加</button>${['入院','救急車','看取り'].map(n=>`<button class="mini" data-f="addi" data-name="${n}">${n}</button>`).join('')}</div></div><label class="field">メモ<textarea class="inp" rows="2" data-f="memo">${esc(h.memo)}</textarea></label></div>`).join(''):'<div class="empty">該当する病院がありません</div>';
+}
+function hOf(el){return S.hospitals.find(h=>h.id===el.closest('.scard')?.dataset.h);}
+function hospitalPaidKeys(h){return Object.keys(S.paid).filter(k=>k.slice(0,k.lastIndexOf('|'))===h.id);}
+$('#sTable').onchange=ev=>{
+  const el=ev.target,h=hOf(el),f=el.dataset.f;if(!h||!f)return;
+  if(!el.checkValidity()){el.reportValidity();renderSettings();return;}
+  const s=el.closest('[data-s]')?h.shifts.find(s=>s.id===el.closest('[data-s]').dataset.s):null;
+  const i=el.closest('[data-i]')?h.incentives.find(i=>i.id===el.closest('[data-i]').dataset.i):null;
+  if(['closeDay','payOffset','payDay'].includes(f)){
+    if(hospitalPaidKeys(h).length&&!confirm('支払サイクルの変更に伴い、この病院の入金確認・実額を解除します。よろしいですか？')){renderSettings();return;}
+    invalidatePaid(hospitalPaidKeys(h));h[f]=+el.value;h.verified=true;
+  }else if(['verified','archived'].includes(f))h[f]=el.checked;
+  else if(['name','memo'].includes(f))h[f]=el.value;
+  else if(['transport','taxRate'].includes(f))h[f]=el.value===''?null:+el.value;
+  else if(f==='holidayRule')h[f]=el.value;
+  else if(s&&f==='kind')s.kind=el.value;
+  else if(s&&f==='rate')s.rate=+el.value||0;
+  else if(s&&f==='hours')s.hours=el.value===''?null:+el.value;
+  else if(i&&f==='incName')i.name=el.value;
+  else if(i&&f==='incAmount')i.amount=+el.value||0;
+  else return;
+  save();renderSettings();
+};
+$('#sTable').onclick=ev=>{
+  const b=ev.target.closest('button[data-f]');if(!b)return;
+  const h=hOf(b),f=b.dataset.f;if(!h)return;
+  if(f==='delh'){
+    const es=S.entries.filter(e=>e.h===h.id),used=workMonths().reduce((a,k)=>a+hospMonth(k,h).cnt,0);
+    if(!confirm(`「${h.name}」を削除します。勤務 ${used}回（日付つき${es.length}件）、関連する日付未登録の回数・入金確認・実額も消えます。よろしいですか？`))return;
+    invalidatePaid(hospitalPaidKeys(h));S.entries=S.entries.filter(e=>e.h!==h.id);
+    for(const k of Object.keys(S.counts)){for(const s of h.shifts)delete S.counts[k][ck(h,s)];if(!Object.keys(S.counts[k]).length)delete S.counts[k];}
+    S.hospitals=S.hospitals.filter(x=>x.id!==h.id);
+  }else if(f==='adds')h.shifts.push({id:newId('s',h.shifts),kind:'当直',rate:0,hours:null});
+  else if(f==='dels'){
+    const s=h.shifts.find(s=>s.id===b.closest('[data-s]').dataset.s),es=S.entries.filter(e=>e.h===h.id&&e.s===s.id);
+    const keys=[...paidKeysForEntries(es),...Object.keys(S.counts).filter(k=>getCount(k,h,s)).map(k=>paymentKey(h,k))];
+    if(!confirm(`「${h.name} / ${s.kind}」を削除します。関連する日付つき勤務・日付未登録の回数・入金確認・実額も消えます。よろしいですか？`))return;
+    invalidatePaid(keys);S.entries=S.entries.filter(e=>e.h!==h.id||e.s!==s.id);h.shifts=h.shifts.filter(x=>x.id!==s.id);
+    for(const k of Object.keys(S.counts)){delete S.counts[k][ck(h,s)];if(!Object.keys(S.counts[k]).length)delete S.counts[k];}
+  }else if(f==='addi')h.incentives.push({id:newId('i',h.incentives),name:b.dataset.name||'手当',amount:({'入院':10000,'救急車':5000,'看取り':0}[b.dataset.name]??0)});
+  else if(f==='deli'){
+    const id=b.closest('[data-i]').dataset.i,i=h.incentives.find(i=>i.id===id),es=S.entries.filter(e=>e.h===h.id&&own(e.inc,id));
+    if(!confirm(`「${i.name}」を削除します。関連する勤務の件数・金額と入金確認・実額も解除します。よろしいですか？`))return;
+    invalidatePaid(paidKeysForEntries(es));es.forEach(e=>delete e.inc[id]);h.incentives=h.incentives.filter(i=>i.id!==id);
+  }else return;
+  save();resetOrder();renderSettings();renderWelcome();
+};
+$('#sSearch').oninput=ev=>{U.sq=ev.target.value;renderSettings();};$('#sOnlyUnverified').onclick=()=>{U.sUnver=!U.sUnver;renderSettings();};$('#sShowArchived').onclick=()=>{U.sArchived=!U.sArchived;renderSettings();};
+function addHospital(){
+  S.hospitals.unshift({id:newId('h',S.hospitals),name:'新しい病院',closeDay:99,payOffset:1,payDay:25,verified:false,shifts:[{id:'s1',kind:'当直',rate:0,hours:null}],transport:null,incentives:[],holidayRule:'none',taxRate:null,memo:'',archived:false});
+  U.sq='';U.sUnver=false;$('#sSearch').value='';save();render();
+  const i=$('.scard input[data-f="name"]');if(i){i.focus();i.select();}
+}
+$('#sAdd').onclick=addHospital;
+$('#bClose').innerHTML=dayOptions(99,true,31);$('#bDay').innerHTML=dayOptions(25,true,31);$('#bOffset').innerHTML=OFFSET_LABEL.map((l,i)=>`<option value="${i}"${i===1?' selected':''}>${l}</option>`).join('');
+$('#sBulk').onclick=()=>$('#bulkPanel').classList.toggle('on');$('#bCancel').onclick=()=>$('#bulkPanel').classList.remove('on');
+function applyBulk(onlyUnver){
+  const cd=+$('#bClose').value,po=+$('#bOffset').value,pd=+$('#bDay').value,targets=S.hospitals.filter(h=>!onlyUnver||!h.verified);
+  if(!targets.length){alert('対象の病院がありません。');return;}
+  if(!confirm(`${targets.length}件の病院を「${cycleText({closeDay:cd,payOffset:po,payDay:pd})}」に設定します。関連する入金確認・実額も解除します。よろしいですか？`))return;
+  targets.forEach(h=>{invalidatePaid(hospitalPaidKeys(h));h.closeDay=cd;h.payOffset=po;h.payDay=pd;h.verified=true;});save();renderSettings();
+}
+$('#bApplyUnver').onclick=()=>applyBulk(true);$('#bApplyAll').onclick=()=>applyBulk(false);
+/* ---------- バックアップ・出力・年ずらし ---------- */
+function download(name,text,mime){
+  const blob=new Blob([text],{type:mime||'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
+}
+const stamp=()=>{const d=new Date();return `${d.getFullYear()}${pad2(d.getMonth()+1)}${pad2(d.getDate())}`;};
+function csv(rows){return '\ufeff'+rows.map(r=>r.map(v=>{
+  // 表計算ソフトでユーザー文字列が数式として実行されるのを防ぐ。
+  let s=String(v??'');if(typeof v==='string'&&/^[\s]*[=+\-@]/.test(s))s="'"+s;
+  return /[",\r\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;
+}).join(',')).join('\r\n');}
+function backup(){S.lastBackup=new Date().toISOString();save();download(`給与データ_${stamp()}.json`,JSON.stringify(S,null,1));renderWelcome();if(U.view==='data')renderData();}
+$('#dExport').onclick=$('#saveBtn').onclick=backup;$('#dImportBtn').onclick=()=>$('#dImport').click();
+$('#dImport').onchange=ev=>{
+  const f=ev.target.files[0];if(!f)return;const fr=new FileReader();
+  fr.onload=()=>{try{
+    const d=migrate(JSON.parse(fr.result));
+    if(!confirm('読み込むと、いまの病院・勤務・入金確認・設定はすべて置き換わります。よろしいですか？'))return;
+    S=d;loadProblem='';save();resetOrder();render();alert('読み込みました。');
+  }catch(e){alert('読み込めませんでした：'+e.message);}};
+  fr.onerror=()=>alert('ファイルを読み取れませんでした。');fr.readAsText(f);ev.target.value='';
+};
+function workCsvRows(){
+  const rows=[['勤務年月','勤務日','病院','勤務種別','単価','回数','基本給','インセンティブ件数','インセンティブ金額','その他手当','給与','交通費','合計','締め期間','振込予定日','概算','メモ']];
+  for(const key of Object.keys(S.counts).sort())for(const h of S.hospitals)for(const s of h.shifts){const n=getCount(key,h,s);if(!n)continue;const r=amountFor(h,s,n);rows.push([key,'',h.name,s.kind,s.rate,n,r.base,'',0,0,r.salary,r.transport,r.amt,key,dateKey(payDateOf(...key.split('-').map(Number),h)),h.closeDay<99?'概算':'','']);}
+  for(const e of S.entries.slice().sort((a,b)=>a.date.localeCompare(b.date))){const h=S.hospitals.find(h=>h.id===e.h),s=h.shifts.find(s=>s.id===e.s),r=entryAmount(e);rows.push([e.date.slice(0,7),e.date,h.name,s.kind,s.rate,1,r.base,h.incentives.filter(i=>e.inc[i.id]).map(i=>i.name+':'+e.inc[i.id]).join(' / '),r.inc,r.extra,r.salary,r.transport,r.amt,periodOf(e,h),dateKey(entryPayDate(e)),'',e.memo]);}
+  return rows;
+}
+$('#dCsvWork').onclick=()=>download(`勤務明細_${stamp()}.csv`,csv(workCsvRows()),'text/csv');
+$('#dCsvMonth').onclick=()=>download(`月別集計_${stamp()}.csv`,csv([['勤務年月','回数','病院数','基本給','インセンティブ','その他手当','給与','交通費','合計'],...workMonths().map(k=>{const t=monthTotal(k);return[k,t.cnt,t.hosps,t.base,t.inc,t.extra,t.salary,t.transport,t.amt];})]),'text/csv');
+$('#dCsvPay').onclick=()=>download(`入金予定_${stamp()}.csv`,csv([['振込予定日','曜日','病院','締め期間','回数','基本給','インセンティブ','その他手当','給与','交通費','合計','振込見込み（交通費込み）','入金確認','実額','差額','概算','設定確認'],...buildPayments().map(p=>[p.dkey,DOW[p.date.getDay()],p.hosp.name,p.period,p.cnt,p.base,p.inc,p.extra,p.salary,p.transport,p.amt,expectedDeposit(p),p.paid.done?'確認済み':'未確認',p.paid.actual,p.paid.actual==null?'':p.paid.actual-expectedDeposit(p),p.approx?'日付未登録分は概算':'',p.verified?'確認済み':'未確認'])]),'text/csv');
+function icsEscape(s){return String(s??'').replace(/\\/g,'\\\\').replace(/\r\n|\r|\n/g,'\\n').replace(/;/g,'\\;').replace(/,/g,'\\,');}
+function foldIcs(line){const enc=new TextEncoder();let out='',part='',bytes=0;for(const c of line){const n=enc.encode(c).length;if(bytes+n>75){out+=part+'\r\n';part=' ';bytes=1;}part+=c;bytes+=n;}return out+part;}
+function icsText(){
+  const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//ChokuKyuyo//Local v2//JA','CALSCALE:GREGORIAN','METHOD:PUBLISH'];
+  const dtstamp=new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
+  function event(uid,date,title,description){const next=parseDate(date);next.setDate(next.getDate()+1);lines.push('BEGIN:VEVENT','UID:'+encodeURIComponent(uid)+'@choku-kyuyo.local','DTSTAMP:'+dtstamp,'DTSTART;VALUE=DATE:'+date.replace(/-/g,''),'DTEND;VALUE=DATE:'+dateKey(next).replace(/-/g,''),'SUMMARY:'+icsEscape(title),'DESCRIPTION:'+icsEscape(description),'END:VEVENT');}
+  S.entries.forEach(e=>{const h=S.hospitals.find(h=>h.id===e.h),s=h.shifts.find(s=>s.id===e.s),r=entryAmount(e);event('work-'+e.id,e.date,h.name+' '+s.kind,breakdown(r)+'\n入金予定 '+dateKey(entryPayDate(e))+'\n'+e.memo);});
+  buildPayments().forEach(p=>event('pay-'+p.key,p.dkey,'入金予定 '+p.hosp.name+' '+YEN(p.amt),p.period+'締め期間分\n'+detailAmount(p)+'\n'+(p.paid.done?'入金確認済み':'未確認')+(p.approx?'\n日付未登録分は概算':'')));
+  lines.push('END:VCALENDAR');return lines.map(foldIcs).join('\r\n')+'\r\n';
+}
+$('#dIcs').onclick=()=>download(`勤務と入金予定_${stamp()}.ics`,icsText(),'text/calendar;charset=utf-8');
+function shiftedYearData(delta){
+  const nc={},ne=clone(S.entries),np={},targets=new Map(),ambiguous=[];
+  const shiftPeriod=k=>{const[y,m]=k.split('-').map(Number);return ymKey(y+delta,m);};
+  for(const[k,mm]of Object.entries(S.counts))nc[shiftPeriod(k)]=mm;
+  ne.forEach(e=>{const[y,m,d]=e.date.split('-').map(Number);e.date=ymKey(y+delta,m)+'-'+pad2(Math.min(d,lastDay(y+delta,m)));});
+  const newEntries=new Map(ne.map(e=>[e.id,e]));
+  const groups=new Map(buildPayments().map(p=>[p.key,p]));
+  for(const[k,v]of Object.entries(S.paid)){
+    const at=k.lastIndexOf('|'),h=S.hospitals.find(h=>h.id===k.slice(0,at)),p=groups.get(k),dest=new Set();
+    if(p){if(p.legacyCnt)dest.add(paymentKey(h,shiftPeriod(p.period)));p.entries.forEach(e=>dest.add(paymentKey(h,periodOf(newEntries.get(e.id),h))));}
+    else dest.add(paymentKey(h,shiftPeriod(k.slice(at+1))));
+    if(dest.size!==1){ambiguous.push(k);for(const d of dest)targets.set(d,null);continue;}
+    const d=[...dest][0];
+    if(targets.has(d)){ambiguous.push(k);targets.set(d,null);}else targets.set(d,v);
+  }
+  for(const[k,v]of targets)if(v)np[k]=v;
+  return {counts:nc,entries:ne,paid:np,ambiguous};
+}
+function shiftYears(delta){const d=shiftedYearData(delta);S.counts=d.counts;S.entries=d.entries;S.paid=d.paid;return d.ambiguous.length;}
+$('#dShiftGo').onclick=()=>{const d=+$('#dShift').value,plan=shiftedYearData(d);if(!confirm(`全勤務・日付未登録の回数・入金確認を ${d} 年ずらします。2月29日は移動先の月末に調整します。${plan.ambiguous.length?'締め期間の分割・統合が起きる入金確認と実額は解除します。先にバックアップを保管してください。':''}よろしいですか？`))return;shiftYears(d);U.ey+=d;U.yy+=d;save();resetOrder();render();alert('ずらしました。');};
+$('#dClearCounts').onclick=()=>{if(!confirm('すべての日付つき勤務・日付未登録の回数・入金確認・実額を消します。病院設定は残ります。よろしいですか？'))return;S.counts={};S.entries=[];S.paid={};save();resetOrder();render();};
+$('#dReset').onclick=()=>{if(!confirm('病院・勤務・入金確認・設定をすべて消して、空の初期状態に戻します。よろしいですか？'))return;S=clone(SEED);loadProblem='';save();resetOrder();render();};
+$('#dGoal').onchange=ev=>{const i=ev.target;if(!i.checkValidity()){i.reportValidity();return;}S.settings.goalYear=i.value===''?null:+i.value;save();};
+$('#dTransport').onchange=ev=>{S.settings.includeTransport=ev.target.checked;save();render();};
+function renderData(){$('#dGoal').value=S.settings.goalYear??'';$('#dTransport').checked=S.settings.includeTransport;$('#dBackup').textContent=S.lastBackup?'最終バックアップ書き出し：'+new Date(S.lastBackup).toLocaleString('ja-JP'):'バックアップはまだ書き出していません。';}
+/* ---------- テーマ・起動 ---------- */
+function updateThemeColor(){const dark=getComputedStyle(document.documentElement).getPropertyValue('--plane').trim();$('meta[name="theme-color"]').content=dark;}
+$('#themeBtn').onclick=()=>{const cur=document.documentElement.getAttribute('data-theme'),next=cur==='dark'?'light':cur==='light'?'':'dark';if(next)document.documentElement.setAttribute('data-theme',next);else document.documentElement.removeAttribute('data-theme');try{localStorage.setItem(STORE_KEY+':theme',next);}catch(e){}updateThemeColor();render();};
+try{const t=localStorage.getItem(STORE_KEY+':theme');if(['dark','light'].includes(t))document.documentElement.setAttribute('data-theme',t);}catch(e){}
+if(window.matchMedia)window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',updateThemeColor);
+function render(){renderStorageWarn();renderWelcome();if(U.view==='entry')renderEntry();else if(U.view==='monthly')renderMonthly();else if(U.view==='pay')renderPay();else if(U.view==='settings')renderSettings();else if(U.view==='data')renderData();}
+load();updateThemeColor();render();
+</script>
+</body>
+</html>

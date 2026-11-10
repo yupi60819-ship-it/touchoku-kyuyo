@@ -104,6 +104,9 @@ header.top{
 .hero .lab{font-size:12px;color:var(--muted)}
 .hero .val{font-size:40px;font-weight:680;letter-spacing:-.02em;line-height:1.1}
 .hero .sub{font-size:12px;color:var(--ink-2);margin-top:2px}
+.base-only{display:block;font-size:15px;font-weight:600;line-height:1.5;color:var(--ink-2);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.hero .base-only{font-size:22px;margin-top:5px}.stat .base-only{font-size:17px}.hsub .base-only{font-size:14px}
+#fPreview>b{display:block;font-size:18px}#fPreview .base-only{font-size:16px}
 .delta{font-size:12px;font-weight:600}
 .delta.up{color:var(--good)} .delta.down{color:var(--critical)} .delta.flat{color:var(--muted)}
 
@@ -131,7 +134,7 @@ header.top{
 .hcycle{font-size:11.5px;color:var(--muted)}
 .hpay{font-size:11.5px;font-weight:600;color:var(--ink);padding:2px 8px;border-radius:99px;background:var(--accent-soft);white-space:nowrap}
 .hsub{margin-left:auto;font-weight:650;font-variant-numeric:tabular-nums}
-.hsub.zero{color:var(--muted);font-weight:400;font-size:12px}
+.hsub.zero{color:var(--muted);font-weight:400}
 .srow{display:flex;align-items:center;gap:10px;padding:7px 14px;border-top:1px solid var(--border)}
 .srow:first-child{border-top:0}
 .skind{width:5.5em;font-size:13px}
@@ -162,6 +165,8 @@ table.t td.num,table.t th.num{text-align:right;font-variant-numeric:tabular-nums
 table.t tbody tr:hover{background:var(--accent-soft)}
 table.t tfoot td{font-weight:650;border-top:1px solid var(--baseline);border-bottom:0}
 .tscroll{overflow-x:auto}
+.tscroll.monthly-table-scroll{max-width:100%;overflow-x:auto}
+#yTable th,#yTable td{white-space:nowrap}
 .thismonth td{background:var(--series-1-wash)}
 
 /* ---------- payments ---------- */
@@ -174,7 +179,7 @@ table.t tfoot td{font-weight:650;border-top:1px solid var(--baseline);border-bot
 .payline{display:flex;gap:10px;padding:6px 14px;border-top:1px solid var(--border);font-size:13px;align-items:baseline}
 .payline .hn{font-weight:520}
 .payline .wm{font-size:12px;color:var(--muted)}
-.payline .amt{margin-left:auto;font-variant-numeric:tabular-nums}
+.payline .amt{margin-left:auto;font-variant-numeric:tabular-nums;font-size:17px;font-weight:650}
 .badge{display:inline-block;font-size:10.5px;padding:1px 6px;border-radius:99px;border:1px solid var(--border);color:var(--muted);vertical-align:1px}
 .badge.warn{color:var(--ink);border-color:var(--warning);background:rgba(250,178,25,.18)}
 .notice{
@@ -272,8 +277,9 @@ details.tv summary{font-size:12px;color:var(--ink-2);cursor:pointer}
         <button class="iconbtn" id="eToday">今月</button>
         <span class="spacer" style="flex:1"></span>
         <div class="hero" style="text-align:right">
-          <div class="lab">この月の勤務で稼いだ額（発生ベース）</div>
+          <div class="lab">この月の総額（交通費・インセンティブ込み／発生ベース）</div>
           <div class="val" id="eTotal">¥0</div>
+          <div class="base-only" id="eBase">基本給のみ ¥0</div>
           <div class="sub" id="eSub">—</div>
         </div>
       </div>
@@ -301,14 +307,16 @@ details.tv summary{font-size:12px;color:var(--ink-2);cursor:pointer}
         </div>
         <span style="flex:1"></span>
         <div class="hero" style="text-align:right">
-          <div class="lab" id="yHeroLab">年間合計（発生ベース）</div>
+          <div class="lab" id="yHeroLab">年間総額（交通費・インセンティブ込み／発生ベース）</div>
           <div class="val" id="yTotal">¥0</div>
+          <div class="base-only" id="yBase">基本給のみ ¥0</div>
           <div class="sub" id="ySub">—</div>
         </div>
       </div>
       <div id="yGoal"></div><div style="height:14px"></div>
       <h2 class="sec-title">月別の稼ぎ（その月の勤務だけで計算）</h2>
       <p class="sec-sub">実際の入金日ではなく、働いた月で集計した金額です。</p>
+      <div class="toolbar" data-chart-metric="yMetric" role="group" aria-label="月別グラフの金額"><button class="chip" data-metric="amt" aria-pressed="true">総額</button><button class="chip" data-metric="base" aria-pressed="false">基本給のみ</button></div>
       <div class="chartbox" id="yChart"></div>
       <div class="legendnote">
         <span><span class="swatch"></span>確定・過去の月</span>
@@ -317,15 +325,16 @@ details.tv summary{font-size:12px;color:var(--ink-2);cursor:pointer}
     </div>
 
     <div style="height:14px"></div>
-    <div class="grid2">
+    <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:14px">
       <div class="card card-pad">
         <h2 class="sec-title">月別内訳</h2>
         <p class="sec-sub">回数・金額・前月比</p>
-        <div class="tscroll"><table class="t" id="yTable"></table></div>
+        <div class="tscroll monthly-table-scroll"><table class="t" id="yTable"></table></div>
       </div>
       <div class="card card-pad">
         <h2 class="sec-title">病院別の稼ぎ（この年の合計）</h2>
         <p class="sec-sub">上位15件</p>
+        <div class="toolbar" data-chart-metric="yHospMetric" role="group" aria-label="病院別グラフの金額"><button class="chip" data-metric="amt" aria-pressed="true">総額</button><button class="chip" data-metric="base" aria-pressed="false">基本給のみ</button></div>
         <div class="chartbox" id="yHosp"></div>
       </div>
     </div>
@@ -339,14 +348,15 @@ details.tv summary{font-size:12px;color:var(--ink-2);cursor:pointer}
     <div class="card card-pad">
       <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-end">
         <div class="hero">
-          <div class="lab">次の入金</div>
+          <div class="lab">次の入金（総額）</div>
           <div class="val" id="pNextAmt">—</div>
+          <div class="base-only" id="pNextBase">基本給のみ —</div>
           <div class="sub" id="pNextWhen">—</div>
         </div>
         <span style="flex:1"></span>
         <div class="statrow" style="flex:2 1 320px">
-          <div class="stat"><div class="lab">今後30日の入金</div><div class="val" id="p30">¥0</div></div>
-          <div class="stat"><div class="lab">未入金の残高（既入力分）</div><div class="val" id="pPending">¥0</div></div>
+          <div class="stat"><div class="lab">今後30日の入金（総額）</div><div class="val" id="p30">¥0</div><div class="base-only" id="p30Base">基本給のみ ¥0</div></div>
+          <div class="stat"><div class="lab">未入金の残高（総額・既入力分）</div><div class="val" id="pPending">¥0</div><div class="base-only" id="pPendingBase">基本給のみ ¥0</div></div>
         </div>
       </div>
     </div>
@@ -355,6 +365,7 @@ details.tv summary{font-size:12px;color:var(--ink-2);cursor:pointer}
     <div class="card card-pad">
       <h2 class="sec-title">振込月ごとの入金額</h2>
       <p class="sec-sub">病院ごとの締め日・支払日の設定にもとづく計算</p>
+      <div class="toolbar" data-chart-metric="pMetric" role="group" aria-label="入金グラフの金額"><button class="chip" data-metric="amt" aria-pressed="true">総額</button><button class="chip" data-metric="base" aria-pressed="false">基本給のみ</button></div>
       <div class="chartbox" id="pChart"></div>
       <div class="legendnote">
         <span><span class="swatch"></span>入金確認済み</span>
@@ -423,7 +434,7 @@ details.tv summary{font-size:12px;color:var(--ink-2);cursor:pointer}
         <button class="btn ghost" id="dCsvPay">入金予定CSV</button>
       </div>
       <div class="btnrow"><button class="btn ghost" id="dIcs">カレンダー書き出し（.ics）</button></div><p class="sec-sub" style="margin-top:8px">日付つき勤務と入金予定を終日イベントとして出力します。日付未登録の回数は入金予定だけに含めます。</p>
-      <div style="height:22px"></div><h2 class="sec-title">集計の設定</h2><div class="fieldgrid" style="margin-top:10px"><label>年間目標（円・空欄=未設定）<input class="inp" type="number" min="1" step="1" id="dGoal"></label><label class="chk"><input type="checkbox" id="dTransport">合計金額に交通費を含める</label></div><p id="dBackup" class="sec-sub"></p>
+      <div style="height:22px"></div><h2 class="sec-title">集計の設定</h2><div class="fieldgrid" style="margin-top:10px"><label>年間目標（円・空欄=未設定）<input class="inp" type="number" min="1" step="1" id="dGoal"></label></div><p id="dBackup" class="sec-sub"></p>
       <div style="height:22px"></div>
       <h2 class="sec-title">取り込みデータの年をずらす</h2>
       <p class="sec-sub">日付未登録の回数・勤務日・入金確認の期間を一緒にずらします。2月29日は移動先の月末に調整します。</p>
@@ -443,7 +454,7 @@ details.tv summary{font-size:12px;color:var(--ink-2);cursor:pointer}
       </div>
     </div>
     <p class="foot">
-      給与は基本給・インセンティブ・その他手当の税引前合計。交通費は別表示し、合計への算入を切り替えられます。<br>
+      総額は基本給・インセンティブ・その他手当・交通費の税引前合計。基本給のみはインセンティブ・その他手当・交通費を含みません。<br>
       日付つき勤務は締め期間を判定し、病院設定に従って土日祝を調整します。日付未登録分は勤務月を期間月とする概算です。<br>祝日は2020〜2040年に対応。控除と手取りは見込み額です。データはこのブラウザだけに保存され、外部に送信されません。
     </p>
   </section>
@@ -485,8 +496,9 @@ textarea{font:inherit;color:inherit;resize:vertical} .field{display:block;margin
 dialog{width:min(590px,calc(100% - 24px));max-height:calc(100dvh - 32px);padding:18px;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);color:var(--ink);overflow-y:auto;box-shadow:0 16px 60px #0005}dialog::backdrop{background:#0007}dialog form{margin:0}#fPreview{display:block;margin-top:14px}.incstep{display:flex;gap:8px;align-items:center;padding:6px 0;flex-wrap:wrap}.incstep .stepper{margin-left:auto}
 .payline{flex-wrap:wrap;align-items:center}.paydetail{flex:1 1 100%}.paycontrols{display:flex;gap:10px;flex-wrap:wrap;align-items:center;width:100%;padding-top:6px}.paycontrols input[type=number]{width:130px}.paycontrols label{font-size:12px}.skind-row{flex-wrap:wrap}.skind-row label{display:flex;gap:5px;align-items:center;font-size:11px;flex:1 1 105px;min-width:0;white-space:nowrap}.skind-row .inp{width:100%}.scard .fieldgrid{margin:12px 0}.scard.archived{opacity:.75}
 .progress{height:9px;background:var(--grid);border-radius:10px;overflow:hidden;margin:8px 0}.progress>span{display:block;height:100%;background:var(--series-1)}
-.card,.view,.grid2>*,.chartbox{min-width:0}.hname,.hcycle,.hsub,.hn,.scard,.notice{overflow-wrap:anywhere}.tip{max-width:100%;white-space:normal}.hero .val{overflow-wrap:anywhere}.btn,.chip,.iconbtn{max-width:100%}table.t td{overflow-wrap:anywhere}
-@media(max-width:600px){.wrap{padding:0 12px 60px}.top-inner{padding-left:12px;padding-right:12px}.brand h1{font-size:15px}.brand{gap:6px}.brand .iconbtn{font-size:11px;padding:5px 7px}.tabs{overflow:visible;gap:0}.tab{padding:9px 0;font-size:11px;flex:1;min-width:0}.monthnav{gap:5px}.monthnav .label{font-size:18px;min-width:8.5em}.hero .val{font-size:32px}.card-pad{padding:12px}.calendar{gap:2px}.calday{padding:3px;min-height:85px;font-size:11px}.calevent,.calpay{font-size:9px}.calholiday{font-size:8px}.fieldgrid{grid-template-columns:minmax(0,1fr)}.srow{gap:6px;padding:8px 10px}.skind{width:auto;min-width:4em}.srate{width:auto}.samt{width:auto;margin-left:auto}.srow .undated-label{flex-basis:100%}.srow .stepper{margin-left:0}.scard{padding:12px}.stat{min-width:120px}.tscroll{overflow:visible}table.mobile-cards,table.mobile-cards tbody,table.mobile-cards tfoot{display:block;width:100%}table.mobile-cards thead{display:none}table.mobile-cards tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:8px 0;border-bottom:1px solid var(--border);gap:4px}table.mobile-cards td{display:block;padding:3px 5px;border:0;text-align:left!important;font-size:12px;min-width:0}table.mobile-cards td:before{content:attr(data-label);display:block;font-size:10px;color:var(--muted)}table.mobile-cards td:first-child{grid-column:1/-1;font-weight:600}.btnrow .btn{font-size:12px}.hhead{padding:10px;gap:6px}.hsub{font-size:13px}}
+.card,.view,.grid2>*,.chartbox{min-width:0}.hname,.hcycle,.hsub,.hn,.scard,.notice{overflow-wrap:anywhere}.tip{width:max-content;max-width:100%;white-space:normal}.hero .val{overflow-wrap:anywhere}.btn,.chip,.iconbtn{max-width:100%}table.t td{overflow-wrap:anywhere}
+@media(max-width:600px){.wrap{padding:0 12px 60px}.top-inner{padding-left:12px;padding-right:12px}.brand h1{font-size:15px}.brand{gap:6px}.brand .iconbtn{font-size:11px;padding:5px 7px}.tabs{overflow:visible;gap:0}.tab{padding:9px 0;font-size:11px;flex:1;min-width:0}.monthnav{gap:5px}.monthnav .label{font-size:18px;min-width:8.5em}.hero .val{font-size:32px}.card-pad{padding:12px}.calendar{gap:2px}.calday{padding:3px;min-height:85px;font-size:11px}.calevent,.calpay{font-size:9px}.calholiday{font-size:8px}.fieldgrid{grid-template-columns:minmax(0,1fr)}.srow{gap:6px;padding:8px 10px}.skind{width:auto;min-width:4em}.srate{width:auto}.samt{width:auto;margin-left:auto}.srow .undated-label{flex-basis:100%}.srow .stepper{margin-left:0}.scard{padding:12px}.stat{min-width:120px}.tscroll{overflow:visible}table.mobile-cards,table.mobile-cards tbody,table.mobile-cards tfoot{display:block;width:100%}table.mobile-cards thead{display:none}table.mobile-cards tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:8px 0;border-bottom:1px solid var(--border);gap:4px}table.mobile-cards td{display:block;padding:3px 5px;border:0;text-align:left!important;font-size:12px;min-width:0}table.mobile-cards td:before{content:attr(data-label);display:block;font-size:10px;color:var(--muted)}table.mobile-cards td:first-child{grid-column:1/-1;font-weight:600}.btnrow .btn{font-size:12px}.hhead{padding:10px;gap:6px}.hsub{font-size:16px}}
+@media(max-width:600px){#yTable tr.empty-month td:not(:first-child){display:none}#yTable tr.empty-month td:first-child:before{display:none}#yTable tr.empty-month td:first-child:after{content:" —";font-weight:400;color:var(--ink-2)}}
 </style>
 <script>
 /* =========================================================================
@@ -605,7 +617,7 @@ function save() {
   try { localStorage.setItem(STORE_KEY,JSON.stringify(S)); }
   catch(e) { storageOK=false; renderStorageWarn(); }
 }
-const U={view:'entry', ey:TY, em:TM, yy:TY, eq:'', onlyEntered:false, pFuture:true, pq:'', sq:'', sUnver:false, sArchived:false, summaryBasis:'paid'};
+const U={view:'entry', ey:TY, em:TM, yy:TY, eq:'', onlyEntered:false, pFuture:true, pq:'', sq:'', sUnver:false, sArchived:false, summaryBasis:'paid', yMetric:'amt', yHospMetric:'amt', pMetric:'amt'};
 /* ---------- 金額・締め期間 ---------- */
 const ck=(h,s)=>`${h.id}:${s.id}`;
 function getCount(key,h,s) { return S.counts[key]?.[ck(h,s)]||0; }
@@ -619,7 +631,8 @@ function setCount(key,h,s,n) {
 }
 function emptyAmount() { return {base:0,inc:0,extra:0,salary:0,transport:0,tax:0,net:0,amt:0,cnt:0,hours:0,timedSalary:0,unknownTransport:false}; }
 function addAmount(a,b) {
-  for (const k of ['base','inc','extra','salary','transport','tax','net','amt','cnt','hours','timedSalary']) a[k]+=b[k];
+  for (const k of ['base','inc','extra','salary','transport','tax','net','cnt','hours','timedSalary']) a[k]+=b[k];
+  a.amt=a.salary+a.transport;
   a.unknownTransport ||= b.unknownTransport; return a;
 }
 function amountFor(h,s,n=1,e=null) {
@@ -627,7 +640,7 @@ function amountFor(h,s,n=1,e=null) {
   const extra=e?.extra??0, salary=base+inc+extra, tr=e?.transport??h.transport;
   const transport=(tr??0)*n, tax=salary*(h.taxRate??0)/100;
   return {base,inc,extra,salary,transport,tax,net:salary-tax+transport,
-    amt:salary+(S.settings.includeTransport?transport:0),cnt:n,hours:(s.hours??0)*n,timedSalary:s.hours?salary:0,unknownTransport:tr==null};
+    amt:salary+transport,cnt:n,hours:(s.hours??0)*n,timedSalary:s.hours?salary:0,unknownTransport:tr==null};
 }
 function entryAmount(e) { const h=S.hospitals.find(h=>h.id===e.h); return amountFor(h,h.shifts.find(s=>s.id===e.s),1,e); }
 function hospMonth(key,h,onlyCounts=false) {
@@ -770,8 +783,8 @@ function columnChart(box, items, opt = {}) {
     if (!t) { tip.classList.remove('on'); return; }
     const d = items[+t.dataset.i];
     const r = box.getBoundingClientRect();
-    tip.innerHTML = `<div class="tl">${esc(d.tipLabel || d.label)}</div><div class="tv">${YEN(d.value)}</div>${d.tipSub ? `<div class="tl">${esc(d.tipSub)}</div>` : ''}`;
-    tip.style.left = (ev.clientX - r.left) + 'px';
+    tip.innerHTML = `<div class="tl">${esc(d.tipLabel || d.label)}</div><div class="tv">${esc(opt.valueLabel||'')} ${YEN(d.value)}</div>${d.tipSub ? `<div class="tl">${esc(d.tipSub)}</div>` : ''}`;
+    tip.style.left = Math.max(tip.offsetWidth/2,Math.min(r.width-tip.offsetWidth/2,ev.clientX-r.left)) + 'px';
     tip.style.top = (ev.clientY - r.top - 10) + 'px';
     tip.classList.add('on');
   });
@@ -802,8 +815,8 @@ function barChartH(box, items, opt = {}) {
     const t = ev.target.closest('.colhit');
     if (!t) { tip.classList.remove('on'); return; }
     const d = items[+t.dataset.i], r = box.getBoundingClientRect();
-    tip.innerHTML = `<div class="tl">${esc(d.label)}</div><div class="tv">${YEN(d.value)}</div>${d.tipSub ? `<div class="tl">${esc(d.tipSub)}</div>` : ''}`;
-    tip.style.left = (ev.clientX - r.left) + 'px'; tip.style.top = (ev.clientY - r.top - 10) + 'px';
+    tip.innerHTML = `<div class="tl">${esc(d.label)}</div><div class="tv">${esc(opt.valueLabel||'')} ${YEN(d.value)}</div>${d.tipSub ? `<div class="tl">${esc(d.tipSub)}</div>` : ''}`;
+    tip.style.left = Math.max(tip.offsetWidth/2,Math.min(r.width-tip.offsetWidth/2,ev.clientX-r.left)) + 'px'; tip.style.top = (ev.clientY - r.top - 10) + 'px';
     tip.classList.add('on');
   });
   svg.addEventListener('mouseleave', () => tip.classList.remove('on'));
@@ -815,7 +828,16 @@ function barChartH(box, items, opt = {}) {
    ========================================================================= */
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 let eSticky=new Set(), eOrder=[], eOrderStamp=null;
-function breakdown(r) { return `給与 ${YEN(r.salary)} ＋ 交通費 ${YEN(r.transport)}${S.settings.includeTransport?'':'（合計には含めない）'}`; }
+function breakdown(r) { return `給与 ${YEN(r.salary)} ＋ 交通費 ${YEN(r.transport)}`; }
+function amountPair(r) { return `総額 ${esc(YEN(r.amt))}<span class="base-only">基本給のみ ${esc(YEN(r.base))}</span>`; }
+const metricLabel = metric => metric==='base'?'基本給のみ':'総額';
+function chartDetails(r) { return `総額 ${YEN(r.amt)} / 基本給のみ ${YEN(r.base)} / ${breakdown(r)}`; }
+function renderChartMetric(key) { $$(`[data-chart-metric="${key}"] .chip`).forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.metric===U[key]))); }
+$$('[data-chart-metric]').forEach(group=>group.onclick=ev=>{
+  const b=ev.target.closest('[data-metric]');if(!b)return;
+  U[group.dataset.chartMetric]=b.dataset.metric;
+  if(group.dataset.chartMetric==='pMetric')renderPay();else renderMonthly();
+});
 function detailAmount(r) { return `基本給 ${YEN(r.base)} / インセンティブ ${YEN(r.inc)} / その他 ${YEN(r.extra)} / 交通費 ${YEN(r.transport)}`; }
 function taxHint(r,h) { return h.taxRate==null?'':`手取り見込み ${YEN(r.salary-r.tax)} ＋ 交通費 ${YEN(r.transport)}（控除 ${h.taxRate}%）`; }
 function transportBadge(r) { return r.unknownTransport?'<span class="badge warn">交通費未登録</span>':''; }
@@ -862,6 +884,7 @@ function renderCalendar() {
 function renderEntry() {
   const key=ymKey(U.ey,U.em),tot=monthTotal(key),[py,pm]=shiftMonth(U.ey,U.em,-1),prev=monthTotal(ymKey(py,pm));
   $('#eLabel').textContent=`${U.ey}年 ${U.em}月`; $('#eTotal').textContent=YEN(tot.amt);
+  $('#eBase').textContent='基本給のみ '+YEN(tot.base);
   $('#eSub').innerHTML=esc(`${tot.cnt}回 / ${tot.hosps}病院・${breakdown(tot)}`)+(tot.amt&&prev.amt?`<br>前月比 ${esc(YEN(tot.amt-prev.amt))}`:'')+' '+transportBadge(tot);
   renderCalendar();
   const q=U.eq.trim(),list=S.hospitals.filter(h=>!h.archived&&(!q||h.name.includes(q)||h.shifts.some(s=>s.kind.includes(q)))&&(!U.onlyEntered||hospMonth(key,h).cnt||eSticky.has(h.id)));
@@ -872,7 +895,7 @@ function renderEntry() {
   ordered.forEach(h=>{if(hospMonth(key,h).cnt)eSticky.add(h.id);});
   $('#eList').innerHTML=ordered.length?ordered.map(h=>{
     const r=hospMonth(key,h),es=S.entries.filter(e=>e.h===h.id&&e.date.slice(0,7)===key).sort((a,b)=>a.date.localeCompare(b.date));
-    return `<div class="hcard${r.cnt?' has':''}"><div class="hhead"><span class="hname">${esc(h.name)}</span><span class="hcycle">${esc(cycleText(h))} ${h.verified?'':'<span class="badge">支払設定未確認</span>'}</span><span class="hsub${r.cnt?'':' zero'}">${esc(YEN(r.amt))} / ${r.cnt}回</span></div>${r.cnt?`<div class="entrychips detail">${esc(breakdown(r))} ${transportBadge(r)}${h.taxRate!=null?'<br>'+esc(taxHint(r,h)):''}</div>`:''}<div class="datechips entrychips">${es.map(e=>{const s=h.shifts.find(s=>s.id===e.s);return `<button class="chip" data-edit="${esc(e.id)}">${esc(e.date.slice(5)+' '+s.kind)} → ${esc(dateKey(entryPayDate(e)).slice(5))}入金</button>`;}).join('')}</div>${h.shifts.map(s=>{
+    return `<div class="hcard${r.cnt?' has':''}"><div class="hhead"><span class="hname">${esc(h.name)}</span><span class="hcycle">${esc(cycleText(h))} ${h.verified?'':'<span class="badge">支払設定未確認</span>'}</span><span class="hsub${r.cnt?'':' zero'}">${amountPair(r)}<span class="detail">${r.cnt}回</span></span></div>${r.cnt?`<div class="entrychips detail">${esc(breakdown(r))} ${transportBadge(r)}${h.taxRate!=null?'<br>'+esc(taxHint(r,h)):''}</div>`:''}<div class="datechips entrychips">${es.map(e=>{const s=h.shifts.find(s=>s.id===e.s);return `<button class="chip" data-edit="${esc(e.id)}">${esc(e.date.slice(5)+' '+s.kind)} → ${esc(dateKey(entryPayDate(e)).slice(5))}入金</button>`;}).join('')}</div>${h.shifts.map(s=>{
       const n=getCount(key,h,s),a=amountFor(h,s,n);
       return `<div class="srow"><span class="skind">${esc(s.kind)}</span><span class="srate">${esc(YEN(s.rate))}</span><span class="undated-label">日付未登録の回数 ${n&&h.closeDay<99?'<span class="badge warn">概算</span>':''}</span><span class="stepper"><button data-act="dec" data-h="${esc(h.id)}" data-s="${esc(s.id)}" ${n?'':'disabled'} aria-label="${esc(h.name+' '+s.kind+'を減らす')}">−</button><input class="n" type="number" min="0" step="1" value="${n}" data-act="set" data-h="${esc(h.id)}" data-s="${esc(s.id)}" aria-label="${esc(h.name+' '+s.kind+' 日付未登録の回数')}"><button data-act="inc" data-h="${esc(h.id)}" data-s="${esc(s.id)}" aria-label="${esc(h.name+' '+s.kind+'を増やす')}">＋</button></span><span class="samt">${n?esc(YEN(a.amt)):'—'}</span>${n?`<button class="mini" data-convert="1" data-h="${esc(h.id)}" data-s="${esc(s.id)}">日付を登録</button><span class="detail">入金予定 ${esc(dateKey(payDateOf(U.ey,U.em,h)))}</span>`:''}</div>`;
     }).join('')}</div>`;
@@ -957,7 +980,7 @@ function previewEntry(){
   $('#fDuplicate').innerHTML=dup.length?`<div class="notice"><div>この日にはすでに ${dup.length} 件の勤務があります。重複を確認してください（追加登録は可能です）。</div></div>`:'';
   if(!h||!s||!validDate(e.date)){$('#fPreview').textContent='病院・勤務種別・日付を選んでください。';return;}
   const r=amountFor(h,s,1,e),d=entryPayDate(e);
-  $('#fPreview').innerHTML=`<b>この勤務の金額 ${esc(YEN(r.amt))}</b><div>${esc(breakdown(r))}</div><div class="detail">${esc(detailAmount(r))}</div><div>入金予定日 ${esc(dateKey(d))}（${DOW[d.getDay()]}） ${h.verified?'':'<span class="badge">支払設定未確認</span>'}</div>${transportBadge(r)}<div class="detail">${esc(taxHint(r,h))}</div>`;
+  $('#fPreview').innerHTML=`<b>${amountPair(r)}</b><div>${esc(breakdown(r))}</div><div class="detail">${esc(detailAmount(r))}</div><div>入金予定日 ${esc(dateKey(d))}（${DOW[d.getDay()]}） ${h.verified?'':'<span class="badge">支払設定未確認</span>'}</div>${transportBadge(r)}<div class="detail">${esc(taxHint(r,h))}</div>`;
 }
 $('#fSearch').oninput=()=>{const draft=readEntry(),sel=draft.h,q=$('#fSearch').value.trim(),h=S.hospitals.find(h=>h.id===sel);fillHospitals(h?.name.includes(q)?sel:'');fillShiftFields($('#fHospital').value===sel?draft:null);previewEntry();};
 $('#fHospital').onchange=()=>{fillShiftFields();previewEntry();};
@@ -990,20 +1013,23 @@ function renderMonthly(){
   const y=U.yy,months=Array.from({length:12},(_,i)=>({m:i+1,...monthTotal(ymKey(y,i+1)),future:y>TY||(y===TY&&i+1>=TM)})),total=emptyAmount();
   months.forEach(d=>addAmount(total,d));const worked=months.filter(d=>d.cnt);
   $('#yLabel').textContent=y+'年';$('#yTotal').textContent=YEN(total.amt);$('#ySub').textContent=`${total.cnt}回 / 稼働${worked.length}ヶ月・${breakdown(total)}`;
+  $('#yBase').textContent='基本給のみ '+YEN(total.base);
+  renderChartMetric('yMetric');renderChartMetric('yHospMetric');
   const goal=S.settings.goalYear,pct=goal?total.amt/goal*100:0;
-  $('#yGoal').innerHTML=goal?`<div style="margin-top:14px">年間目標 ${esc(YEN(goal))} / 達成率 ${pct.toFixed(1)}%<div class="progress" role="progressbar" aria-label="年間目標の進捗" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.max(0,Math.min(100,pct))}"><span style="width:${Math.max(0,Math.min(100,pct))}%"></span></div>${esc(YEN(Math.max(0,goal-total.amt)))} あと必要</div>`:'';
-  columnChart($('#yChart'),months.map(d=>({label:d.m+'月',value:d.amt,dim:d.future,tipLabel:`${y}年${d.m}月の勤務`,tipSub:`${d.cnt}回 / ${breakdown(d)}`})),{aria:y+'年の月別収入',height:240});
+  $('#yGoal').innerHTML=goal?`<div style="margin-top:14px">年間目標（総額ベース） ${esc(YEN(goal))} / 達成率 ${pct.toFixed(1)}%<div class="progress" role="progressbar" aria-label="年間目標の進捗（総額ベース）" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.max(0,Math.min(100,pct))}"><span style="width:${Math.max(0,Math.min(100,pct))}%"></span></div>${esc(YEN(Math.max(0,goal-total.amt)))} あと必要</div>`:'';
+  columnChart($('#yChart'),months.map(d=>({label:d.m+'月',value:d[U.yMetric],dim:d.future,tipLabel:`${y}年${d.m}月の勤務`,tipSub:`${d.cnt}回 / ${chartDetails(d)}`})),{aria:y+'年の月別収入',valueLabel:metricLabel(U.yMetric),height:240});
   $('#yTable').classList.add('mobile-cards');
-  $('#yTable').innerHTML=tableHTML(['月','回数','給与','うちインセンティブ','交通費','合計','前月比'],months.map(d=>{const[py,pm]=shiftMonth(y,d.m,-1),prev=monthTotal(ymKey(py,pm)).amt;return [d.m+'月',d.cnt,YEN(d.salary),YEN(d.inc),YEN(d.transport),YEN(d.amt),YEN(d.amt-prev)];}),['年間合計',total.cnt,YEN(total.salary),YEN(total.inc),YEN(total.transport),YEN(total.amt),'']);
+  $('#yTable').innerHTML=tableHTML(['月','回数','総額','基本給のみ','給与','うちインセンティブ','交通費','前月比'],months.map(d=>{const[py,pm]=shiftMonth(y,d.m,-1),prev=monthTotal(ymKey(py,pm)).amt;return [d.m+'月',d.cnt,...[d.amt,d.base,d.salary,d.inc,d.transport,d.amt-prev].map(v=>d.cnt?YEN(v):'—')];}),['年間合計',total.cnt,YEN(total.amt),YEN(total.base),YEN(total.salary),YEN(total.inc),YEN(total.transport),'']);
+  $$('#yTable tbody tr').forEach((row,i)=>row.classList.toggle('empty-month',!months[i].cnt));
   const perH=yearSummary(y,'work');
-  barChartH($('#yHosp'),perH.slice(0,15).map(r=>({label:r.h.name,value:r.amt,tipSub:r.cnt+'回 / '+breakdown(r)})),{aria:y+'年の病院別収入'});
-  $('#yHospTable').innerHTML=tableHTML(['病院','回数','給与','平均単価','時給換算','交通費'],perH.map(r=>[r.h.name+(r.h.archived?'（アーカイブ）':''),r.cnt,YEN(r.salary),YEN(r.salary/r.cnt),r.hours?YEN(r.timedSalary/r.hours)+'/時':'時間未登録',YEN(r.transport)]));
+  barChartH($('#yHosp'),perH.slice().sort((a,b)=>b[U.yHospMetric]-a[U.yHospMetric]).slice(0,15).map(r=>({label:r.h.name,value:r[U.yHospMetric],tipSub:r.cnt+'回 / '+chartDetails(r)})),{aria:y+'年の病院別収入',valueLabel:metricLabel(U.yHospMetric)});
+  $('#yHospTable').innerHTML=tableHTML(['病院','回数','総額','基本給のみ','給与','うちインセンティブ','平均単価','時給換算','交通費'],perH.map(r=>[r.h.name+(r.h.archived?'（アーカイブ）':''),r.cnt,YEN(r.amt),YEN(r.base),YEN(r.salary),YEN(r.inc),YEN(r.salary/r.cnt),r.hours?YEN(r.timedSalary/r.hours)+'/時':'時間未登録',YEN(r.transport)]));
   $('#yBasis').value=U.summaryBasis;
   const sum=yearSummary(y,U.summaryBasis),st=emptyAmount();sum.forEach(r=>addAmount(st,r));
-  $('#ySummary').innerHTML=tableHTML(['病院','年間支給額（給与）','交通費','控除見込み額'],sum.map(r=>[r.h.name,YEN(r.salary),YEN(r.transport),r.h.taxRate==null?'未設定':YEN(r.tax)]),['年間合計',YEN(st.salary),YEN(st.transport),YEN(st.tax)+'（設定分）']);
+  $('#ySummary').innerHTML=tableHTML(['病院','総額','基本給のみ','年間支給額（給与）','交通費','控除見込み額'],sum.map(r=>[r.h.name,YEN(r.amt),YEN(r.base),YEN(r.salary),YEN(r.transport),r.h.taxRate==null?'未設定':YEN(r.tax)]),['年間合計',YEN(st.amt),YEN(st.base),YEN(st.salary),YEN(st.transport),YEN(st.tax)+'（設定分）']);
 }
 $('#yPrev').onclick=()=>{U.yy--;renderMonthly();};$('#yNext').onclick=()=>{U.yy++;renderMonthly();};$('#yBasis').onchange=ev=>{U.summaryBasis=ev.target.value;renderMonthly();};
-$('#yCsv').onclick=()=>download(`年間サマリ_${U.yy}_${U.summaryBasis}.csv`,csv([['年','基準','病院','年間支給額（給与）','交通費','控除見込み額'],...yearSummary(U.yy,U.summaryBasis).map(r=>[U.yy,U.summaryBasis==='paid'?'入金日（予定含む）':'勤務日',r.h.name,r.salary,r.transport,r.h.taxRate==null?'未設定':r.tax])]),'text/csv');
+$('#yCsv').onclick=()=>download(`年間サマリ_${U.yy}_${U.summaryBasis}.csv`,csv([['年','基準','病院','総額','基本給のみ','年間支給額（給与）','交通費','控除見込み額'],...yearSummary(U.yy,U.summaryBasis).map(r=>[U.yy,U.summaryBasis==='paid'?'入金日（予定含む）':'勤務日',r.h.name,r.amt,r.base,r.salary,r.transport,r.h.taxRate==null?'未設定':r.tax])]),'text/csv');
 /* ---------- 入金予定 ---------- */
 function renderPay(){
   const all=buildPayments(),pending=all.filter(p=>!p.paid.done),late=pending.filter(p=>p.date<TODAY),unver=new Set(all.filter(p=>!p.verified).map(p=>p.hosp.id));
@@ -1015,15 +1041,18 @@ function renderPay(){
   };
   const future=pending.filter(p=>p.date>=TODAY),next=future[0];
   $('#pNextAmt').textContent=next?YEN(future.filter(p=>p.dkey===next.dkey).reduce((a,p)=>a+p.amt,0)):'—';
+  $('#pNextBase').textContent='基本給のみ '+(next?YEN(future.filter(p=>p.dkey===next.dkey).reduce((a,p)=>a+p.base,0)):'—');
   $('#pNextWhen').textContent=next?`${next.dkey}（${DOW[next.date.getDay()]}）・${future.filter(p=>p.dkey===next.dkey).map(p=>p.hosp.name).join('、')}`:'予定はありません';
   const in30=new Date(TODAY);in30.setDate(in30.getDate()+30);
   $('#p30').textContent=YEN(future.filter(p=>p.date<=in30).reduce((a,p)=>a+p.amt,0));$('#pPending').textContent=YEN(pending.reduce((a,p)=>a+p.amt,0));
-  const byMonth=new Map();all.forEach(p=>{const r=byMonth.get(p.pm)||{amt:0,upcoming:false};r.amt+=p.amt;r.upcoming ||= !p.paid.done;byMonth.set(p.pm,r);});
+  $('#p30Base').textContent='基本給のみ '+YEN(future.filter(p=>p.date<=in30).reduce((a,p)=>a+p.base,0));$('#pPendingBase').textContent='基本給のみ '+YEN(pending.reduce((a,p)=>a+p.base,0));
+  renderChartMetric('pMetric');
+  const byMonth=new Map();all.forEach(p=>{const r=byMonth.get(p.pm)||{...emptyAmount(),upcoming:false};addAmount(r,p);r.upcoming ||= !p.paid.done;byMonth.set(p.pm,r);});
   const keys=[...byMonth.keys()].sort();
-  if(keys.length)columnChart($('#pChart'),keys.map(k=>({label:k.slice(5)+'月',sublabel:k.slice(0,4),value:byMonth.get(k).amt,dim:byMonth.get(k).upcoming,tipLabel:k,tipSub:'入金予定日で集計'})),{aria:'振込月ごとの入金額',height:240});else $('#pChart').innerHTML='<div class="empty">入金予定がありません</div>';
+  if(keys.length)columnChart($('#pChart'),keys.map(k=>({label:k.slice(5)+'月',sublabel:k.slice(0,4),value:byMonth.get(k)[U.pMetric],dim:byMonth.get(k).upcoming,tipLabel:k,tipSub:'入金予定日で集計 / '+chartDetails(byMonth.get(k))})),{aria:'振込月ごとの入金額',valueLabel:metricLabel(U.pMetric),height:240});else $('#pChart').innerHTML='<div class="empty">入金予定がありません</div>';
   const q=U.pq.trim(),shown=all.filter(p=>(!U.pFuture||p.date>=TODAY)&&(!q||p.hosp.name.includes(q))),groups=[];
   shown.forEach(p=>{if(!groups.length||groups.at(-1).dkey!==p.dkey)groups.push({dkey:p.dkey,items:[]});groups.at(-1).items.push(p);});
-  $('#pList').innerHTML=groups.length?groups.map(g=>`<div class="paygroup${next?.dkey===g.dkey?' next':''}"><div class="payhead"><span class="paydate">${esc(g.dkey)}</span><span class="paydow">（${DOW[g.items[0].date.getDay()]}）</span><span class="paytot">${esc(YEN(g.items.reduce((a,p)=>a+p.amt,0)))}</span></div>${g.items.map(p=>`<div class="payline" data-pay="${esc(p.key)}"><span class="hn">${esc(p.hosp.name)}</span><span class="wm">${esc(p.period)} 締め期間分・${p.cnt}回 ${p.approx?'<span class="badge warn">日付未登録分は概算</span>':''} ${p.verified?'':'<span class="badge">支払設定未確認</span>'}</span><span class="amt">${esc(YEN(p.amt))}</span><div class="paydetail detail">${esc(detailAmount(p))}<br>${esc(breakdown(p))} ${transportBadge(p)}${p.hosp.taxRate!=null?'<br>'+esc(taxHint(p,p.hosp)):''}</div>${p.entries.length?`<div class="paydetail detail">勤務日 ${p.entries.map(e=>esc(e.date)).join('、')}${p.legacyCnt?' / 日付未登録 '+p.legacyCnt+'回':''}</div>`:''}<div class="paycontrols"><label class="chk"><input type="checkbox" data-paid="done" ${p.paid.done?'checked':''}>入金確認</label><label>実際の入金額（円） <input class="inp num" type="number" min="0" step="1" data-paid="actual" value="${esc(p.paid.actual??'')}" placeholder="未入力"></label><span class="detail">振込見込み ${esc(YEN(expectedDeposit(p)))}（交通費込み${p.hosp.taxRate==null?'・控除未設定':''}）${p.paid.actual==null?'':' / 差額 '+esc(YEN(p.paid.actual-expectedDeposit(p)))}</span></div></div>`).join('')}</div>`).join(''):'<div class="card empty">該当する入金予定がありません。</div>';
+  $('#pList').innerHTML=groups.length?groups.map(g=>`<div class="paygroup${next?.dkey===g.dkey?' next':''}"><div class="payhead"><span class="paydate">${esc(g.dkey)}</span><span class="paydow">（${DOW[g.items[0].date.getDay()]}）</span><span class="paytot">${amountPair(g.items.reduce((a,p)=>addAmount(a,p),emptyAmount()))}</span></div>${g.items.map(p=>`<div class="payline" data-pay="${esc(p.key)}"><span class="hn">${esc(p.hosp.name)}</span><span class="wm">${esc(p.period)} 締め期間分・${p.cnt}回 ${p.approx?'<span class="badge warn">日付未登録分は概算</span>':''} ${p.verified?'':'<span class="badge">支払設定未確認</span>'}</span><span class="amt">${amountPair(p)}</span><div class="paydetail detail">${esc(detailAmount(p))}<br>${esc(breakdown(p))} ${transportBadge(p)}${p.hosp.taxRate!=null?'<br>'+esc(taxHint(p,p.hosp)):''}</div>${p.entries.length?`<div class="paydetail detail">勤務日 ${p.entries.map(e=>esc(e.date)).join('、')}${p.legacyCnt?' / 日付未登録 '+p.legacyCnt+'回':''}</div>`:''}<div class="paycontrols"><label class="chk"><input type="checkbox" data-paid="done" ${p.paid.done?'checked':''}>入金確認</label><label>実際の入金額（円） <input class="inp num" type="number" min="0" step="1" data-paid="actual" value="${esc(p.paid.actual??'')}" placeholder="未入力"></label><span class="detail">振込見込み ${esc(YEN(expectedDeposit(p)))}（交通費込み${p.hosp.taxRate==null?'・控除未設定':''}）${p.paid.actual==null?'':' / 差額 '+esc(YEN(p.paid.actual-expectedDeposit(p)))}</span></div></div>`).join('')}</div>`).join(''):'<div class="card empty">該当する入金予定がありません。</div>';
 }
 $('#pList').onchange=ev=>{
   const i=ev.target.closest('input[data-paid]');if(!i)return;if(!i.checkValidity()){i.reportValidity();return;}
@@ -1124,14 +1153,14 @@ $('#dImport').onchange=ev=>{
   fr.onerror=()=>alert('ファイルを読み取れませんでした。');fr.readAsText(f);ev.target.value='';
 };
 function workCsvRows(){
-  const rows=[['勤務年月','勤務日','病院','勤務種別','単価','回数','基本給','インセンティブ件数','インセンティブ金額','その他手当','給与','交通費','合計','締め期間','振込予定日','概算','メモ']];
+  const rows=[['勤務年月','勤務日','病院','勤務種別','単価','回数','基本給のみ','インセンティブ件数','インセンティブ金額','その他手当','給与','交通費','総額','締め期間','振込予定日','概算','メモ']];
   for(const key of Object.keys(S.counts).sort())for(const h of S.hospitals)for(const s of h.shifts){const n=getCount(key,h,s);if(!n)continue;const r=amountFor(h,s,n);rows.push([key,'',h.name,s.kind,s.rate,n,r.base,'',0,0,r.salary,r.transport,r.amt,key,dateKey(payDateOf(...key.split('-').map(Number),h)),h.closeDay<99?'概算':'','']);}
   for(const e of S.entries.slice().sort((a,b)=>a.date.localeCompare(b.date))){const h=S.hospitals.find(h=>h.id===e.h),s=h.shifts.find(s=>s.id===e.s),r=entryAmount(e);rows.push([e.date.slice(0,7),e.date,h.name,s.kind,s.rate,1,r.base,h.incentives.filter(i=>e.inc[i.id]).map(i=>i.name+':'+e.inc[i.id]).join(' / '),r.inc,r.extra,r.salary,r.transport,r.amt,periodOf(e,h),dateKey(entryPayDate(e)),'',e.memo]);}
   return rows;
 }
 $('#dCsvWork').onclick=()=>download(`勤務明細_${stamp()}.csv`,csv(workCsvRows()),'text/csv');
-$('#dCsvMonth').onclick=()=>download(`月別集計_${stamp()}.csv`,csv([['勤務年月','回数','病院数','基本給','インセンティブ','その他手当','給与','交通費','合計'],...workMonths().map(k=>{const t=monthTotal(k);return[k,t.cnt,t.hosps,t.base,t.inc,t.extra,t.salary,t.transport,t.amt];})]),'text/csv');
-$('#dCsvPay').onclick=()=>download(`入金予定_${stamp()}.csv`,csv([['振込予定日','曜日','病院','締め期間','回数','基本給','インセンティブ','その他手当','給与','交通費','合計','振込見込み（交通費込み）','入金確認','実額','差額','概算','設定確認'],...buildPayments().map(p=>[p.dkey,DOW[p.date.getDay()],p.hosp.name,p.period,p.cnt,p.base,p.inc,p.extra,p.salary,p.transport,p.amt,expectedDeposit(p),p.paid.done?'確認済み':'未確認',p.paid.actual,p.paid.actual==null?'':p.paid.actual-expectedDeposit(p),p.approx?'日付未登録分は概算':'',p.verified?'確認済み':'未確認'])]),'text/csv');
+$('#dCsvMonth').onclick=()=>download(`月別集計_${stamp()}.csv`,csv([['勤務年月','回数','病院数','基本給のみ','インセンティブ','その他手当','給与','交通費','総額'],...workMonths().map(k=>{const t=monthTotal(k);return[k,t.cnt,t.hosps,t.base,t.inc,t.extra,t.salary,t.transport,t.amt];})]),'text/csv');
+$('#dCsvPay').onclick=()=>download(`入金予定_${stamp()}.csv`,csv([['振込予定日','曜日','病院','締め期間','回数','基本給のみ','インセンティブ','その他手当','給与','交通費','総額','振込見込み（交通費込み）','入金確認','実額','差額','概算','設定確認'],...buildPayments().map(p=>[p.dkey,DOW[p.date.getDay()],p.hosp.name,p.period,p.cnt,p.base,p.inc,p.extra,p.salary,p.transport,p.amt,expectedDeposit(p),p.paid.done?'確認済み':'未確認',p.paid.actual,p.paid.actual==null?'':p.paid.actual-expectedDeposit(p),p.approx?'日付未登録分は概算':'',p.verified?'確認済み':'未確認'])]),'text/csv');
 function icsEscape(s){return String(s??'').replace(/\\/g,'\\\\').replace(/\r\n|\r|\n/g,'\\n').replace(/;/g,'\\;').replace(/,/g,'\\,');}
 function foldIcs(line){const enc=new TextEncoder();let out='',part='',bytes=0;for(const c of line){const n=enc.encode(c).length;if(bytes+n>75){out+=part+'\r\n';part=' ';bytes=1;}part+=c;bytes+=n;}return out+part;}
 function icsText(){
@@ -1166,8 +1195,7 @@ $('#dShiftGo').onclick=()=>{const d=+$('#dShift').value,plan=shiftedYearData(d);
 $('#dClearCounts').onclick=()=>{if(!confirm('すべての日付つき勤務・日付未登録の回数・入金確認・実額を消します。病院設定は残ります。よろしいですか？'))return;S.counts={};S.entries=[];S.paid={};save();resetOrder();render();};
 $('#dReset').onclick=()=>{if(!confirm('病院・勤務・入金確認・設定をすべて消して、空の初期状態に戻します。よろしいですか？'))return;S=clone(SEED);loadProblem='';save();resetOrder();render();};
 $('#dGoal').onchange=ev=>{const i=ev.target;if(!i.checkValidity()){i.reportValidity();return;}S.settings.goalYear=i.value===''?null:+i.value;save();};
-$('#dTransport').onchange=ev=>{S.settings.includeTransport=ev.target.checked;save();render();};
-function renderData(){$('#dGoal').value=S.settings.goalYear??'';$('#dTransport').checked=S.settings.includeTransport;$('#dBackup').textContent=S.lastBackup?'最終バックアップ書き出し：'+new Date(S.lastBackup).toLocaleString('ja-JP'):'バックアップはまだ書き出していません。';}
+function renderData(){$('#dGoal').value=S.settings.goalYear??'';$('#dBackup').textContent=S.lastBackup?'最終バックアップ書き出し：'+new Date(S.lastBackup).toLocaleString('ja-JP'):'バックアップはまだ書き出していません。';}
 /* ---------- テーマ・起動 ---------- */
 function updateThemeColor(){const dark=getComputedStyle(document.documentElement).getPropertyValue('--plane').trim();$('meta[name="theme-color"]').content=dark;}
 $('#themeBtn').onclick=()=>{const cur=document.documentElement.getAttribute('data-theme'),next=cur==='dark'?'light':cur==='light'?'':'dark';if(next)document.documentElement.setAttribute('data-theme',next);else document.documentElement.removeAttribute('data-theme');try{localStorage.setItem(STORE_KEY+':theme',next);}catch(e){}updateThemeColor();render();};
